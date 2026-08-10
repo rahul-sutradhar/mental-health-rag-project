@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The page you are looking for could not be found. Return to Serenity Mindspace.">
+    <meta property="og:title" content="Page Not Found — Serenity Mindspace">
+    <meta property="og:description" content="The page you are looking for could not be found. Return to Serenity Mindspace.">
+    <meta name="theme-color" content="#7A9B76">
+    <meta name="robots" content="noindex">
+    <title>Page Not Found — Serenity Mindspace</title>
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <link rel="manifest" href="static/manifest.json">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        body {
+            padding-top: 80px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 70px;
+            }
+        }
+
+        .not-found-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: var(--space-3xl) var(--space-lg);
+            position: relative;
+        }
+
+        .error-code {
+            font-family: var(--font-display);
+            font-size: clamp(6rem, 20vw, 12rem);
+            font-weight: 700;
+            color: var(--color-primary);
+            line-height: 1;
+            opacity: 0.15;
+            position: absolute;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .error-content {
+            position: relative;
+            z-index: 1;
+            max-width: 560px;
+        }
+
+        .breathing-404 {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space-xl);
+            font-size: 3.5rem;
+            animation: breathe 4s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.08);
+                opacity: 0.85;
+            }
+        }
+
+        .suggested-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+            justify-content: center;
+            margin-top: var(--space-2xl);
+        }
+
+        .history-info {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-xl);
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            margin-top: var(--space-xl);
+            display: inline-block;
+        }
+
+        .crisis-floating-box {
+            position: fixed;
+            bottom: var(--space-xl);
+            right: var(--space-xl);
+            background: rgba(212, 124, 124, 0.1);
+            border: 1px solid rgba(212, 124, 124, 0.3);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            font-size: var(--text-sm);
+            text-align: center;
+            z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+            .crisis-floating-box {
+                position: static;
+                margin-top: var(--space-2xl);
+                width: 100%;
+                max-width: 420px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+                <li><a href="specialists.html" class="nav-link">Specialists</a></li>
+                <li><a href="faq.html" class="nav-link">FAQ</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode">
+                    <span data-dark-icon>🌙</span>
+                </button>
+                <a href="login.html" class="btn btn-outline" id="navLoginBtn">Login</a>
+                <a href="login.html?signup=true" class="btn btn-primary" id="navSignupBtn">Sign Up</a>
+                <a href="dashboard.html" class="btn btn-outline" id="navDashBtn" style="display:none;">Dashboard</a>
+                <button class="btn btn-ghost" data-action="logout" id="navLogoutBtn" style="display:none;">Logout</button>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="not-found-page">
+        <div class="error-code">404</div>
+
+        <div class="error-content">
+            <div class="breathing-404">🧘</div>
+
+            <h1 style="margin-bottom: var(--space-md);">This page took a mindful break.</h1>
+
+            <p class="text-secondary" style="font-size: var(--text-lg);">
+                The page you're looking for doesn't exist, was moved, or you may have followed a broken link.
+                <br><br>
+                Take a breath — we'll get you back on track.
+            </p>
+
+            <div class="suggested-links">
+                <a href="index.html" class="btn btn-primary btn-lg">Go Home</a>
+                <a href="ai-chat.html" class="btn btn-secondary">Chat with AI</a>
+                <a href="specialists.html" class="btn btn-outline">Find a Specialist</a>
+            </div>
+
+            <div class="history-info" id="historyInfo">
+                <span id="backInfo">
+                    Or <a href="#" onclick="goBack(); return false;" style="color: var(--color-primary);">go back to where you were</a>
+                </span>
+            </div>
+
+            <p style="margin-top: var(--space-3xl); font-size: var(--text-sm); color: var(--text-tertiary);">
+                If you believe this is a mistake, <a href="contact.html" style="color: var(--color-primary);">let us know</a>.
+            </p>
+        </div>
+
+        <div class="crisis-floating-box">
+            <span style="font-weight: 600; color: var(--color-error);">Need immediate help?</span><br>
+            Call <a href="tel:9152987821" style="color: var(--color-error); font-weight: 700;">9152987821 (iCall)</a> — always available
+        </div>
+    </div>
+
+    <footer style="background: var(--color-dark); color: white; text-align: center; padding: var(--space-xl); font-size: var(--text-sm);">
+        <p>
+            &copy; <span class="footer-year"></span> Serenity Mindspace &nbsp;|&nbsp;
+            <a href="privacy.html" style="color: var(--color-primary-light);">Privacy</a> &nbsp;|&nbsp;
+            <a href="terms.html" style="color: var(--color-primary-light);">Terms</a> &nbsp;|&nbsp;
+            <a href="contact.html" style="color: var(--color-primary-light);">Contact</a>
+        </p>
+        <p style="margin-top: var(--space-sm); color: rgba(255,255,255,0.5);">
+            Crisis:
+            <a href="tel:9152987821" style="color: #D47C7C; font-weight: 700;">iCall 9152987821</a> (Mon–Sat) |
+            <a href="tel:18602662345" style="color: #D47C7C; font-weight: 700;">Vandrevala 1860-2662-345</a> (24×7)
+        </p>
+    </footer>
+
+    <script>
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = "index.html";
+            }
+        }
+
+        let countdown = 30;
+        const backInfo = document.getElementById("backInfo");
+
+        const timer = setInterval(function () {
+            countdown--;
+
+            if (backInfo) {
+                backInfo.innerHTML = 'Or <a href="#" onclick="goBack(); return false;" style="color: var(--color-primary);">go back</a> — redirecting home in ' + countdown + 's';
+            }
+
+            if (countdown <= 0) {
+                clearInterval(timer);
+                window.location.href = "index.html";
+            }
+        }, 1000);
+
+        document.querySelectorAll(".footer-year").forEach(function (e) {
+            e.textContent = new Date().getFullYear();
+        });
+    </script>
+</body>
+</html>

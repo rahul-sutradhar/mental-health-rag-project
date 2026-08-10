@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Take our comprehensive 17-question wellness assessment to receive personalised mental health support recommendations.">
+    <meta name="keywords" content="mental health, therapy, counselling, anxiety, depression, wellness, mindfulness, online therapy">
+    <meta name="author" content="Serenity Mindspace">
+    <meta name="robots" content="index, follow">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Wellness Assessment – Serenity Mindspace">
+    <meta property="og:description" content="Take our comprehensive 17-question wellness assessment to receive personalised mental health support recommendations.">
+    <meta property="og:site_name" content="Serenity Mindspace">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Wellness Assessment – Serenity Mindspace">
+    <meta name="twitter:description" content="Take our comprehensive 17-question wellness assessment to receive personalised mental health support recommendations.">
+    <!-- PWA -->
+    <meta name="theme-color" content="#7A9B76">
+    <title>Wellness Assessment – Serenity Mindspace</title>
+       <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <style>
+        .assessment-container {
+            min-height: 100vh;
+            padding-top: 80px;
+            background: var(--bg-primary);
+        }
+
+        .assessment-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--space-2xl) var(--space-lg);
+        }
+
+        .progress-container {
+            margin-bottom: var(--space-3xl);
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--space-md);
+        }
+
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .progress-step::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: var(--color-sand);
+            z-index: -1;
+        }
+
+        .progress-step:last-child::after {
+            display: none;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--color-sand);
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space-sm);
+            font-family: var(--font-display);
+            font-weight: 600;
+            transition: all var(--transition-base);
+        }
+
+        .progress-step.active .step-circle {
+            background: var(--color-primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .progress-step.completed .step-circle {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .step-label {
+            font-size: var(--text-xs);
+            color: var(--text-tertiary);
+            font-family: var(--font-display);
+            font-weight: 500;
+        }
+
+        .progress-step.active .step-label {
+            color: var(--color-primary-dark);
+        }
+
+        .section-card {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-xl);
+            padding: var(--space-3xl);
+            box-shadow: var(--shadow-md);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .section-header {
+            margin-bottom: var(--space-2xl);
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: var(--text-3xl);
+            font-weight: 600;
+            margin-bottom: var(--space-md);
+        }
+
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: var(--text-lg);
+        }
+
+        .question {
+            margin-bottom: var(--space-2xl);
+        }
+
+        .question-number {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: var(--color-primary-light);
+            color: var(--color-primary-dark);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: var(--text-sm);
+            margin-right: var(--space-sm);
+        }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: var(--text-xl);
+            font-weight: 500;
+            margin-bottom: var(--space-lg);
+            display: flex;
+            align-items: center;
+        }
+
+        .mood-scale {
+            display: flex;
+            justify-content: space-between;
+            gap: var(--space-sm);
+            margin-top: var(--space-md);
+        }
+
+        .mood-option {
+            flex: 1;
+            padding: var(--space-md);
+            text-align: center;
+            border: 2px solid var(--color-sand);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            background: var(--bg-elevated);
+        }
+
+        .mood-option:hover {
+            border-color: var(--color-primary);
+            transform: translateY(-2px);
+        }
+
+        .mood-option.selected {
+            border-color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+
+        .mood-emoji {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: var(--space-sm);
+        }
+
+        .mood-label {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .option-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-md);
+            margin-top: var(--space-md);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: var(--space-md);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: var(--space-md);
+            justify-content: space-between;
+            margin-top: var(--space-3xl);
+        }
+
+        .crisis-alert {
+            background: rgba(212, 124, 124, 0.1);
+            border: 2px solid var(--color-error);
+            border-radius: var(--radius-md);
+            padding: var(--space-xl);
+            margin-top: var(--space-xl);
+            display: none;
+        }
+
+        .crisis-alert h4 {
+            color: var(--color-error);
+            margin-bottom: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .crisis-number {
+            font-size: var(--text-2xl);
+            font-weight: 700;
+            color: var(--color-error);
+            margin: var(--space-md) 0;
+        }
+
+        .results-card {
+            text-align: center;
+            padding: var(--space-3xl);
+        }
+
+        .results-icon {
+            font-size: 4rem;
+            margin-bottom: var(--space-lg);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-lg);
+            margin: var(--space-3xl) 0;
+        }
+
+        .result-item {
+            background: rgba(122, 155, 118, 0.05);
+            padding: var(--space-lg);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-primary-light);
+        }
+
+        .result-label {
+            font-family: var(--font-display);
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--space-sm);
+        }
+
+        .result-value {
+            font-family: var(--font-display);
+            font-size: var(--text-2xl);
+            font-weight: 600;
+            color: var(--color-primary-dark);
+        }
+
+        @media (max-width: 640px) {
+            .section-card {
+                padding: var(--space-xl);
+            }
+
+            .mood-scale {
+                flex-wrap: wrap;
+            }
+
+            .mood-option {
+                flex: 1 1 calc(33.333% - var(--space-sm));
+            }
+
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-buttons {
+                flex-direction: column-reverse;
+            }
+        }
+    </style>
+    <script src="static/js/utils.js" defer></script>
+    <style>body { padding-top: 80px; } @media(max-width:768px){body{padding-top:70px;}}</style>
+</head>
+<body>
+    <!-- Shared Header -->
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="specialists.html" class="nav-link">Specialists</a></li>
+                <li><a href="store.html" class="nav-link">Pricing</a></li>
+                <li><a href="ai-chat.html" class="nav-link">AI Chat</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span data-dark-icon>🌙</span></button>
+                <a href="login.html" class="btn btn-outline" id="navLoginBtn">Login</a>
+                <a href="login.html?signup=true" class="btn btn-primary" id="navSignupBtn">Sign Up</a>
+                <a href="dashboard.html" class="btn btn-outline" id="navDashBtn" style="display:none">Dashboard</a>
+                <button class="btn btn-ghost" data-action="logout" id="navLogoutBtn" style="display:none">Logout</button>
+            </div>
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="assessment-container">
+        <div class="assessment-content">
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-steps">
+                    <div class="progress-step active" id="step1">
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Emotional State</div>
+                    </div>
+                    <div class="progress-step" id="step2">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">History</div>
+                    </div>
+                    <div class="progress-step" id="step3">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Daily Life</div>
+                    </div>
+                    <div class="progress-step" id="step4">
+                        <div class="step-circle">4</div>
+                        <div class="step-label">Goals</div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Form Container -->
+            <div id="formContainer">
+                <!-- Section 1: Current Emotional State -->
+                <div class="section-card section-content" id="section1">
+                    <div class="section-header">
+                        <h2 class="section-title">Current Emotional State</h2>
+                        <p class="section-subtitle">Help us understand how you're feeling right now</p>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">1</span>
+                            How are you feeling today?
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="feeling" value="calm" required>
+                                <span class="checkmark"></span>
+                                Calm and content
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="feeling" value="anxious">
+                                <span class="checkmark"></span>
+                                Anxious or worried
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="feeling" value="sad">
+                                <span class="checkmark"></span>
+                                Sad or down
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="feeling" value="stressed">
+                                <span class="checkmark"></span>
+                                Stressed or overwhelmed
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="feeling" value="numb">
+                                <span class="checkmark"></span>
+                                Numb or disconnected
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">2</span>
+                            How would you rate your current mood?
+                        </div>
+                        <div class="mood-scale">
+                            <div class="mood-option" onclick="selectMood(1)">
+                                <span class="mood-emoji">😞</span>
+                                <span class="mood-label">1</span>
+                            </div>
+                            <div class="mood-option" onclick="selectMood(2)">
+                                <span class="mood-emoji">😕</span>
+                                <span class="mood-label">2-3</span>
+                            </div>
+                            <div class="mood-option" onclick="selectMood(3)">
+                                <span class="mood-emoji">😐</span>
+                                <span class="mood-label">4-5</span>
+                            </div>
+                            <div class="mood-option" onclick="selectMood(4)">
+                                <span class="mood-emoji">🙂</span>
+                                <span class="mood-label">6-7</span>
+                            </div>
+                            <div class="mood-option" onclick="selectMood(5)">
+                                <span class="mood-emoji">😊</span>
+                                <span class="mood-label">8-10</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="moodRating" name="mood" required>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">3</span>
+                            How long have you been feeling this way?
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="duration" value="today" required>
+                                <span class="checkmark"></span>
+                                Just today
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="duration" value="days">
+                                <span class="checkmark"></span>
+                                A few days
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="duration" value="weeks">
+                                <span class="checkmark"></span>
+                                1-2 weeks
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="duration" value="several-weeks">
+                                <span class="checkmark"></span>
+                                Several weeks
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="duration" value="months">
+                                <span class="checkmark"></span>
+                                Months or longer
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">4</span>
+                            What brings you here today? (Select all that apply)
+                        </div>
+                        <div class="checkbox-group">
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="reasons" value="anxiety">
+                                <span class="checkmark"></span>
+                                Anxiety or panic
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="reasons" value="depression">
+                                <span class="checkmark"></span>
+                                Depression or sadness
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="reasons" value="relationships">
+                                <span class="checkmark"></span>
+                                Relationship issues
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="reasons" value="stress">
+                                <span class="checkmark"></span>
+                                Work/school stress
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="reasons" value="trauma">
+                                <span class="checkmark"></span>
+                                Trauma or past experiences
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="reasons" value="transitions">
+                                <span class="checkmark"></span>
+                                Life transitions
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="reasons" value="grief">
+                                <span class="checkmark"></span>
+                                Grief or loss
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="reasons" value="self-esteem">
+                                <span class="checkmark"></span>
+                                Self-esteem issues
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="reasons" value="sleep">
+                                <span class="checkmark"></span>
+                                Sleep problems
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="reasons" value="talk">
+                                <span class="checkmark"></span>
+                                Just need someone to talk to
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">5</span>
+                            How is this affecting your daily life?
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="impact" value="minimal" required>
+                                <span class="checkmark"></span>
+                                Not affecting it much
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="impact" value="somewhat">
+                                <span class="checkmark"></span>
+                                Somewhat affecting it
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="impact" value="significant">
+                                <span class="checkmark"></span>
+                                Significantly affecting it
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="impact" value="severe">
+                                <span class="checkmark"></span>
+                                Severely affecting it
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Mental Health History -->
+                <div class="section-card section-content" id="section2" style="display: none;">
+                    <div class="section-header">
+                        <h2 class="section-title">Mental Health History</h2>
+                        <p class="section-subtitle">Understanding your background helps us provide better support</p>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">6</span>
+                            Have you experienced mental health challenges before?
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="previousChallenges" value="yes" required>
+                                <span class="checkmark"></span>
+                                Yes
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="previousChallenges" value="no">
+                                <span class="checkmark"></span>
+                                No
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="previousChallenges" value="unsure">
+                                <span class="checkmark"></span>
+                                Not sure
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">7</span>
+                            Have you received mental health treatment previously?
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="treatment" value="currently" required>
+                                <span class="checkmark"></span>
+                                Yes, currently in treatment
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="treatment" value="past">
+                                <span class="checkmark"></span>
+                                Yes, in the past
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="treatment" value="never">
+                                <span class="checkmark"></span>
+                                No, never
+                            </label>
+                        </div>
+                        <div class="form-group" style="margin-top: var(--space-lg);" id="treatmentDetails" style="display: none;">
+                            <label class="form-label">What type of treatment? (Optional)</label>
+                            <textarea class="form-textarea" name="treatmentType" rows="3" placeholder="e.g., Therapy, medication, support groups..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">8</span>
+                            Are you currently taking any medications?
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="medications" value="yes" required>
+                                <span class="checkmark"></span>
+                                Yes
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="medications" value="no">
+                                <span class="checkmark"></span>
+                                No
+                            </label>
+                        </div>
+                        <div class="form-group" style="margin-top: var(--space-lg);" id="medicationsList" style="display: none;">
+                            <label class="form-label">Please list (Optional)</label>
+                            <textarea class="form-textarea" name="medicationDetails" rows="3" placeholder="List any medications you're currently taking..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">9</span>
+                            Have you ever experienced thoughts of self-harm or suicide?
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="selfHarm" value="recently" required onchange="checkCrisis()">
+                                <span class="checkmark"></span>
+                                Yes, recently
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="selfHarm" value="past" onchange="checkCrisis()">
+                                <span class="checkmark"></span>
+                                Yes, in the past
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="selfHarm" value="never" onchange="checkCrisis()">
+                                <span class="checkmark"></span>
+                                No, never
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="crisis-alert" id="crisisAlert">
+                        <h4>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                            </svg>
+                            Crisis Resources Available
+                        </h4>
+                        <p>If you're experiencing thoughts of self-harm, please reach out for immediate help:</p>
+                        <div class="crisis-number">iCall — 9152987821</div>
+                        <p style="margin: 0;">You don't have to face this alone. Help is available 24/7.</p>
+                    </div>
+                </div>
+
+                <!-- Section 3: Daily Functioning -->
+                <div class="section-card section-content" id="section3" style="display: none;">
+                    <div class="section-header">
+                        <h2 class="section-title">Daily Functioning</h2>
+                        <p class="section-subtitle">Let's understand how you're managing daily life</p>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">10</span>
+                            How would you rate your sleep quality?
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="sleep" value="good" required>
+                                <span class="checkmark"></span>
+                                Good
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="sleep" value="fair">
+                                <span class="checkmark"></span>
+                                Fair
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="sleep" value="poor">
+                                <span class="checkmark"></span>
+                                Poor
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="sleep" value="very-poor">
+                                <span class="checkmark"></span>
+                                Very poor
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">11</span>
+                            How are your energy levels?
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="energy" value="high" required>
+                                <span class="checkmark"></span>
+                                High
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="energy" value="normal">
+                                <span class="checkmark"></span>
+                                Normal
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="energy" value="low">
+                                <span class="checkmark"></span>
+                                Low
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="energy" value="exhausted">
+                                <span class="checkmark"></span>
+                                Exhausted
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">12</span>
+                            How often do you engage in activities you enjoy?
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="activities" value="regularly" required>
+                                <span class="checkmark"></span>
+                                Regularly
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="activities" value="sometimes">
+                                <span class="checkmark"></span>
+                                Sometimes
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="activities" value="rarely">
+                                <span class="checkmark"></span>
+                                Rarely
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="activities" value="never">
+                                <span class="checkmark"></span>
+                                Never
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">13</span>
+                            How is your appetite?
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="appetite" value="normal" required>
+                                <span class="checkmark"></span>
+                                Normal
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="appetite" value="increased">
+                                <span class="checkmark"></span>
+                                Increased
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="appetite" value="decreased">
+                                <span class="checkmark"></span>
+                                Decreased
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="appetite" value="very-poor">
+                                <span class="checkmark"></span>
+                                Very poor
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Support & Goals -->
+                <div class="section-card section-content" id="section4" style="display: none;">
+                    <div class="section-header">
+                        <h2 class="section-title">Support & Goals</h2>
+                        <p class="section-subtitle">Help us understand what you're hoping to achieve</p>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">14</span>
+                            Do you have a support system? (friends, family, etc.)
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="support" value="strong" required>
+                                <span class="checkmark"></span>
+                                Strong support
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="support" value="some">
+                                <span class="checkmark"></span>
+                                Some support
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="support" value="limited">
+                                <span class="checkmark"></span>
+                                Limited support
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="support" value="none">
+                                <span class="checkmark"></span>
+                                No support
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">15</span>
+                            What are you hoping to achieve through therapy? (Select all that apply)
+                        </div>
+                        <div class="checkbox-group">
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="goals" value="reduce-anxiety">
+                                <span class="checkmark"></span>
+                                Feel less anxious/depressed
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="goals" value="relationships">
+                                <span class="checkmark"></span>
+                                Improve relationships
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="goals" value="coping">
+                                <span class="checkmark"></span>
+                                Develop coping skills
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="goals" value="trauma">
+                                <span class="checkmark"></span>
+                                Process past trauma
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="goals" value="understanding">
+                                <span class="checkmark"></span>
+                                Better understand myself
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="goals" value="stress">
+                                <span class="checkmark"></span>
+                                Manage stress better
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">16</span>
+                            What type of support do you prefer?
+                        </div>
+                        <div class="option-grid">
+                            <label class="form-radio">
+                                <input type="radio" name="preferredSupport" value="listening" required>
+                                <span class="checkmark"></span>
+                                Listening & emotional support
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="preferredSupport" value="practical">
+                                <span class="checkmark"></span>
+                                Practical advice & strategies
+                            </label>
+                            <label class="form-radio">
+                                <input type="radio" name="preferredSupport" value="both">
+                                <span class="checkmark"></span>
+                                Both equally
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="question">
+                        <div class="question-text">
+                            <span class="question-number">17</span>
+                            Is there anything else you'd like us to know?
+                        </div>
+                        <textarea class="form-textarea" name="additional" rows="5" placeholder="Share anything else that might help us support you better (optional)..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Results Page -->
+                <div class="section-card section-content" id="resultsSection" style="display: none;">
+                    <div class="results-card">
+                        <div class="results-icon">📊</div>
+                        <h2 class="section-title">Your Wellness Assessment</h2>
+                        <p class="section-subtitle">Thank you for sharing. Here's what we learned:</p>
+
+                        <div class="results-grid">
+                            <div class="result-item">
+                                <div class="result-label">Recommended Focus</div>
+                                <div class="result-value" id="recommendedFocus">Anxiety Management</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Urgency Level</div>
+                                <div class="result-value" id="urgencyLevel">Moderate</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Suggested Approach</div>
+                                <div class="result-value" id="suggestedApproach">Specialist Care</div>
+                            </div>
+                        </div>
+
+                        <div class="card card-flat" style="text-align: left; margin: var(--space-2xl) 0;">
+                            <h4 style="margin-bottom: var(--space-md);">Your responses have been saved securely</h4>
+                            <p style="color: var(--text-secondary); margin-bottom: 0;">
+                                This information will help your specialist or AI assistant understand your needs and provide personalized support from the very first session.
+                            </p>
+                        </div>
+
+                        <a href="choose-support.html" class="btn btn-primary btn-lg">
+                            Continue to Choose Support Type →
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons" id="navButtons">
+                <button type="button" class="btn btn-outline btn-lg" id="prevBtn" onclick="previousSection()" style="display: none;">
+                    ← Previous
+                </button>
+                <button type="button" class="btn btn-primary btn-lg" id="nextBtn" onclick="nextSection()">
+                    Next →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSection = 1;
+        const totalSections = 4;
+        const assessmentData = {};
+
+        // Show treatment details if yes
+        document.querySelectorAll('input[name="treatment"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const details = document.getElementById('treatmentDetails');
+                if (e.target.value !== 'never') {
+                    details.style.display = 'block';
+                } else {
+                    details.style.display = 'none';
+                }
+            });
+        });
+
+        // Show medication details if yes
+        document.querySelectorAll('input[name="medications"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const details = document.getElementById('medicationsList');
+                if (e.target.value === 'yes') {
+                    details.style.display = 'block';
+                } else {
+                    details.style.display = 'none';
+                }
+            });
+        });
+
+        function selectMood(rating) {
+            document.getElementById('moodRating').value = rating;
+            document.querySelectorAll('.mood-option').forEach(opt => opt.classList.remove('selected'));
+            event.target.closest('.mood-option').classList.add('selected');
+        }
+
+        function checkCrisis() {
+            const selfHarm = document.querySelector('input[name="selfHarm"]:checked');
+            const crisisAlert = document.getElementById('crisisAlert');
+            
+            if (selfHarm && selfHarm.value === 'recently') {
+                crisisAlert.style.display = 'block';
+            } else {
+                crisisAlert.style.display = 'none';
+            }
+        }
+
+        function validateSection(sectionNum) {
+            const section = document.getElementById(`section${sectionNum}`);
+            const requiredInputs = section.querySelectorAll('[required]');
+            
+            for (let input of requiredInputs) {
+                if (input.type === 'radio') {
+                    const name = input.name;
+                    if (!section.querySelector(`input[name="${name}"]:checked`)) {
+                        showToast('Please answer all required questions in this section.', 'warning');
+                        return false;
+                    }
+                } else if (!input.value.trim()) {
+                    showToast('Please answer all required questions in this section.', 'warning');
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function saveSection(sectionNum) {
+            const section = document.getElementById(`section${sectionNum}`);
+            const inputs = section.querySelectorAll('input, textarea, select');
+            
+            inputs.forEach(input => {
+                if (input.type === 'checkbox') {
+                    if (!assessmentData[input.name]) {
+                        assessmentData[input.name] = [];
+                    }
+                    if (input.checked && !assessmentData[input.name].includes(input.value)) {
+                        assessmentData[input.name].push(input.value);
+                    }
+                } else if (input.type === 'radio') {
+                    if (input.checked) {
+                        assessmentData[input.name] = input.value;
+                    }
+                } else {
+                    assessmentData[input.name] = input.value;
+                }
+            });
+            
+            // Save to localStorage
+            saveAssessment( JSON.stringify(assessmentData));
+        }
+
+        function nextSection() {
+            if (!validateSection(currentSection)) {
+                return;
+            }
+            
+            saveSection(currentSection);
+            
+            if (currentSection < totalSections) {
+                // Hide current section
+                document.getElementById(`section${currentSection}`).style.display = 'none';
+                document.getElementById(`step${currentSection}`).classList.remove('active');
+                document.getElementById(`step${currentSection}`).classList.add('completed');
+                
+                // Show next section
+                currentSection++;
+                document.getElementById(`section${currentSection}`).style.display = 'block';
+                document.getElementById(`step${currentSection}`).classList.add('active');
+                
+                // Update buttons
+                document.getElementById('prevBtn').style.display = 'block';
+                
+                if (currentSection === totalSections) {
+                    document.getElementById('nextBtn').textContent = 'Complete Assessment';
+                }
+                
+                // Update progress
+                updateProgress();
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                // Show results
+                showResults();
+            }
+        }
+
+        function previousSection() {
+            if (currentSection > 1) {
+                document.getElementById(`section${currentSection}`).style.display = 'none';
+                document.getElementById(`step${currentSection}`).classList.remove('active');
+                
+                currentSection--;
+                document.getElementById(`section${currentSection}`).style.display = 'block';
+                document.getElementById(`step${currentSection}`).classList.remove('completed');
+                document.getElementById(`step${currentSection}`).classList.add('active');
+                
+                if (currentSection === 1) {
+                    document.getElementById('prevBtn').style.display = 'none';
+                }
+                
+                document.getElementById('nextBtn').textContent = 'Next →';
+                
+                updateProgress();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function updateProgress() {
+            const progress = (currentSection / totalSections) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function showResults() {
+            // Hide all sections and nav buttons
+            for (let i = 1; i <= totalSections; i++) {
+                document.getElementById(`section${i}`).style.display = 'none';
+            }
+            document.getElementById('navButtons').style.display = 'none';
+            
+            // Analyze responses and show results
+            analyzeAssessment();
+            
+            // Show results section
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            // Update all progress steps to completed
+            for (let i = 1; i <= totalSections; i++) {
+                document.getElementById(`step${i}`).classList.remove('active');
+                document.getElementById(`step${i}`).classList.add('completed');
+            }
+            
+            // Set progress to 100%
+            document.getElementById('progressFill').style.width = '100%';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function analyzeAssessment() {
+            // Simple analysis logic
+            const data = assessmentData;
+            
+            // Determine focus
+            let focus = 'General Wellness';
+            if (data.reasons && data.reasons.includes('anxiety')) {
+                focus = 'Anxiety Management';
+            } else if (data.reasons && data.reasons.includes('depression')) {
+                focus = 'Depression Support';
+            } else if (data.reasons && data.reasons.includes('trauma')) {
+                focus = 'Trauma Recovery';
+            }
+            
+            // Determine urgency
+            let urgency = 'Low';
+            if (data.impact === 'severe' || data.selfHarm === 'recently') {
+                urgency = 'High';
+            } else if (data.impact === 'significant' || data.duration === 'months') {
+                urgency = 'Moderate';
+            }
+            
+            // Determine approach
+            let approach = 'AI Chat';
+            if (urgency === 'High' || data.selfHarm === 'recently') {
+                approach = 'Immediate Specialist';
+            } else if (urgency === 'Moderate') {
+                approach = 'Specialist Care';
+            }
+            
+            document.getElementById('recommendedFocus').textContent = focus;
+            document.getElementById('urgencyLevel').textContent = urgency;
+            document.getElementById('suggestedApproach').textContent = approach;
+        }
+
+        // Initialize progress
+        updateProgress();
+    </script>
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section"><h4>Serenity Mindspace</h4><p style="color:rgba(255,255,255,0.7);font-size:var(--text-sm);">Your safe space for mental wellness.</p></div>
+                <div class="footer-section"><h4>Platform</h4><ul class="footer-links"><li><a href="index.html">Home</a></li><li><a href="about.html">About Us</a></li><li><a href="specialists.html">Specialists</a></li><li><a href="store.html">Pricing</a></li><li><a href="ai-chat.html">AI Chat</a></li></ul></div>
+                <div class="footer-section"><h4>Support</h4><ul class="footer-links"><li><a href="faq.html">FAQ</a></li><li><a href="contact.html">Contact Us</a></li><li><a href="privacy.html">Privacy Policy</a></li><li><a href="terms.html">Terms of Service</a></li></ul></div>
+                <div class="footer-section crisis-resources"><h4>⚠️ Crisis Resources</h4><p style="color:rgba(255,255,255,0.9);font-size:var(--text-sm);margin-bottom:var(--space-sm);">If you are in crisis:</p><a href="tel:9152987821" class="crisis-number">iCall — 9152987821</a></div>
+            </div>
+            <div class="footer-bottom"><p>&copy; <span class="footer-year"></span> Serenity Mindspace. All rights reserved.</p></div>
+        </div>
+    </footer>
+    <script>document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());</script>
+</body>
+</html>

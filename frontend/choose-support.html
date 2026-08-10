@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Your Support - Serenity Mindspace</title>
+    <meta name="description" content="Choose between our compassionate AI support or connect with a licensed mental health specialist.">
+    <meta name="theme-color" content="#7A9B76">
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        .support-hero {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            color: white;
+            padding: 120px 0 70px;
+            text-align: center;
+        }
+
+        .support-hero h1 {
+            color: white;
+            margin-bottom: var(--space-md);
+        }
+
+        .support-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-2xl);
+            margin-top: var(--space-3xl);
+        }
+
+        .support-card {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            transition: transform var(--transition-base), box-shadow var(--transition-base);
+            border: 1px solid var(--color-sand);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .support-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .support-card-header {
+            padding: var(--space-2xl);
+            text-align: center;
+            background: linear-gradient(180deg, rgba(122,155,118,0.08) 0%, transparent 100%);
+        }
+
+        .support-icon {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space-lg);
+            font-size: 2.5rem;
+        }
+
+        .support-body {
+            padding: 0 var(--space-2xl) var(--space-2xl);
+            flex: 1;
+        }
+
+        .support-features {
+            list-style: none;
+            padding: 0;
+            margin: var(--space-lg) 0 var(--space-xl);
+        }
+
+        .support-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
+            color: var(--text-secondary);
+        }
+
+        .support-features li span {
+            color: var(--color-primary);
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .price-box {
+            background: rgba(122,155,118,0.08);
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            text-align: center;
+            margin-bottom: var(--space-xl);
+        }
+
+        .support-actions {
+            margin-top: auto;
+        }
+
+        .support-note {
+            background: rgba(212,124,124,0.08);
+            border: 1px solid rgba(212,124,124,0.2);
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            margin-top: var(--space-2xl);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 900px) {
+            .support-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+                <li><a href="specialists.html" class="nav-link">Specialists</a></li>
+                <li><a href="store.html" class="nav-link">Pricing</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span data-dark-icon>🌙</span></button>
+                <div class="token-display">
+                    <svg class="token-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+                    </svg>
+                    <span data-token-display>0</span> tokens
+                </div>
+                <a href="dashboard.html" class="btn btn-outline">Dashboard</a>
+                <button class="btn btn-ghost" data-action="logout">Logout</button>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <section class="support-hero">
+        <div class="container container-narrow">
+            <p class="hero-eyebrow" style="color: rgba(255,255,255,0.85);">Choose What Feels Right</p>
+            <h1>Your Support, Your Way</h1>
+            <p style="font-size: var(--text-lg); opacity: 0.9;">
+                Whether you want instant AI guidance or a human specialist, we're here to support you with care, privacy, and flexibility.
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="support-grid">
+                <div class="support-card">
+                    <div class="support-card-header">
+                        <div class="support-icon" style="background: rgba(122,155,118,0.12);">🤖</div>
+                        <h2 style="margin-bottom: var(--space-sm);">AI Companion</h2>
+                        <p class="text-secondary">Always available for emotional support, grounding tools, and check-ins.</p>
+                    </div>
+
+                    <div class="support-body">
+                        <div class="price-box">
+                            <div style="font-family: var(--font-display); font-size: var(--text-2xl); font-weight: 700; color: var(--color-primary-dark);">10 messages free</div>
+                            <p class="text-secondary" style="margin: var(--space-xs) 0 0;">Then 5 tokens per message</p>
+                        </div>
+
+                        <ul class="support-features">
+                            <li><span>✓</span><div>Available 24/7 with no waiting time</div></li>
+                            <li><span>✓</span><div>Supportive responses for stress, sadness, anxiety, overwhelm, and more</div></li>
+                            <li><span>✓</span><div>Private and easy to access from anywhere</div></li>
+                            <li><span>✓</span><div>Helpful when you need immediate emotional support</div></li>
+                        </ul>
+
+                        <div class="support-actions">
+                            <a href="ai-chat.html" class="btn btn-primary btn-full btn-lg">Start AI Chat</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="support-card">
+                    <div class="support-card-header">
+                        <div class="support-icon" style="background: rgba(229,181,164,0.18);">👩‍⚕️</div>
+                        <h2 style="margin-bottom: var(--space-sm);">Licensed Specialist</h2>
+                        <p class="text-secondary">Talk to a verified professional for deeper, human-led support.</p>
+                    </div>
+
+                    <div class="support-body">
+                        <div class="price-box">
+                            <div style="font-family: var(--font-display); font-size: var(--text-2xl); font-weight: 700; color: var(--color-primary-dark);">From 50 tokens</div>
+                            <p class="text-secondary" style="margin: var(--space-xs) 0 0;">Chat and video options available</p>
+                        </div>
+
+                        <ul class="support-features">
+                            <li><span>✓</span><div>Browse verified profiles by specialization and experience</div></li>
+                            <li><span>✓</span><div>Book sessions in chat or video format</div></li>
+                            <li><span>✓</span><div>Ideal for ongoing guidance and structured therapy support</div></li>
+                            <li><span>✓</span><div>Confidential, professional, and person-centered care</div></li>
+                        </ul>
+
+                        <div class="support-actions">
+                            <a href="specialists.html" class="btn btn-secondary btn-full btn-lg">Find a Specialist</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="support-note">
+                <strong style="color: var(--color-error);">Need urgent help?</strong>
+                If you're in crisis or feel unsafe, please contact a crisis helpline immediately —
+                <a href="tel:9152987821" style="color: var(--color-error); font-weight: 700;">iCall: 9152987821</a>
+                or
+                <a href="tel:18602662345" style="color: var(--color-error); font-weight: 700;">Vandrevala: 1860-2662-345</a>.
+            </div>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Serenity Mindspace</h4>
+                    <p style="color:rgba(255,255,255,0.7);font-size:var(--text-sm);">Compassionate support when you need it most.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Platform</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="specialists.html">Specialists</a></li>
+                        <li><a href="store.html">Pricing</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="terms.html">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section crisis-resources">
+                    <h4>⚠️ Crisis Resources</h4>
+                    <a href="tel:9152987821" class="crisis-number">iCall — 9152987821</a>
+                    <a href="tel:18602662345" class="crisis-number" style="font-size:var(--text-sm);margin-top:var(--space-xs);">Vandrevala — 1860-2662-345</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="footerYear"></span> Serenity Mindspace. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+        const menuToggle = document.getElementById('menuToggle');
+        const navMenu = document.getElementById('navMenu');
+
+        if (menuToggle && navMenu) {
+            menuToggle.addEventListener('click', () => {
+                menuToggle.classList.toggle('active');
+                navMenu.classList.toggle('active');
+            });
+        }
+    </script>
+</body>
+</html>

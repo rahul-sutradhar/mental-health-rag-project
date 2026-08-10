@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Specialist Dashboard - Serenity Mindspace</title>
+    <meta name="description" content="Manage your specialist profile, sessions, earnings, and availability.">
+    <meta name="theme-color" content="#7A9B76">
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        .dashboard-container {
+            min-height: 100vh;
+            padding-top: 100px;
+            padding-bottom: var(--space-4xl);
+            background: linear-gradient(180deg, var(--bg-primary) 0%, rgba(164,196,160,0.05) 100%);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: var(--space-2xl);
+            align-items: start;
+        }
+
+        .dashboard-sidebar {
+            position: sticky;
+            top: 100px;
+            background: var(--bg-elevated);
+            padding: var(--space-xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .dashboard-main {
+            display: grid;
+            gap: var(--space-2xl);
+        }
+
+        .profile-card {
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space-md);
+            font-size: 2rem;
+            color: white;
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: var(--space-xl) 0 0;
+        }
+
+        .nav-list li {
+            margin-bottom: var(--space-sm);
+        }
+
+        .nav-list a,
+        .nav-list button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            font: inherit;
+            transition: all var(--transition-base);
+            text-decoration: none;
+        }
+
+        .nav-list a:hover,
+        .nav-list button:hover,
+        .nav-list a.active {
+            background: rgba(122,155,118,0.1);
+            color: var(--color-primary-dark);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-lg);
+        }
+
+        .stat-card {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-label {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: var(--text-3xl);
+            font-weight: 700;
+            color: var(--color-primary-dark);
+        }
+
+        .session-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-lg);
+            padding: var(--space-lg) 0;
+            border-bottom: 1px solid var(--color-sand);
+        }
+
+        .session-row:last-child {
+            border-bottom: none;
+        }
+
+        .availability-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-lg);
+        }
+
+        .time-slot {
+            display: inline-block;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-full);
+            background: rgba(122,155,118,0.1);
+            color: var(--color-primary-dark);
+            font-size: var(--text-sm);
+            margin: 0 var(--space-sm) var(--space-sm) 0;
+        }
+
+        .verification-box {
+            background: rgba(232,196,104,0.12);
+            border: 1px solid rgba(232,196,104,0.3);
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-sidebar {
+                position: static;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid,
+            .availability-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .session-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        body {
+            padding-top: 80px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="specialist-dashboard.html" class="nav-link active">Dashboard</a></li>
+                <li><a href="specialists.html" class="nav-link">Public Directory</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span data-dark-icon>🌙</span></button>
+                <button class="btn btn-ghost" data-action="logout">Logout</button>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="dashboard-container">
+        <div class="container">
+            <div class="dashboard-grid">
+                <aside class="dashboard-sidebar">
+                    <div class="profile-card">
+                        <div class="profile-avatar">👩‍⚕️</div>
+                        <h3 id="specialistName">Specialist</h3>
+                        <p class="text-secondary" style="margin-bottom: var(--space-md);">Verified Mental Health Professional</p>
+                        <div class="badge badge-primary" id="verificationBadgeText">Verification Pending</div>
+                    </div>
+
+                    <div class="verification-box" style="margin-top: var(--space-xl);">
+                        <strong>Status:</strong>
+                        <span id="verificationStatusText">Under review</span>
+                        <p style="margin: var(--space-sm) 0 0; font-size: var(--text-sm);">
+                            Your submitted credentials are being reviewed by our team.
+                        </p>
+                    </div>
+
+                    <ul class="nav-list">
+                        <li><a href="#overview" class="active">📊 Overview</a></li>
+                        <li><a href="#sessions">🗓️ Sessions</a></li>
+                        <li><a href="#availability">⏰ Availability</a></li>
+                        <li><a href="#earnings">💰 Earnings</a></li>
+                        <li><a href="#profile">👤 Profile</a></li>
+                        <li><a href="specialists.html">🌐 View Public Listing</a></li>
+                    </ul>
+                </aside>
+
+                <main class="dashboard-main">
+                    <section id="overview" class="card">
+                        <div class="section-header">
+                            <h2>Overview</h2>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">Upcoming Sessions</div>
+                                <div class="stat-value">6</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Completed Sessions</div>
+                                <div class="stat-value">84</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Average Rating</div>
+                                <div class="stat-value">4.9</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">This Month</div>
+                                <div class="stat-value">₹18k</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="sessions" class="card">
+                        <div class="section-header">
+                            <h2>Upcoming Sessions</h2>
+                            <a href="chat-room.html" class="btn btn-outline btn-sm">Open Chat Room</a>
+                        </div>
+
+                        <div class="session-row">
+                            <div>
+                                <h4 style="margin-bottom: var(--space-xs);">Aarav S.</h4>
+                                <p class="text-secondary" style="margin: 0;">Video session • Tomorrow • 5:00 PM</p>
+                            </div>
+                            <div style="display:flex; gap: var(--space-sm);">
+                                <a href="video-call.html" class="btn btn-primary btn-sm">Join</a>
+                                <button class="btn btn-outline btn-sm">Reschedule</button>
+                            </div>
+                        </div>
+
+                        <div class="session-row">
+                            <div>
+                                <h4 style="margin-bottom: var(--space-xs);">Priya K.</h4>
+                                <p class="text-secondary" style="margin: 0;">Chat session • Friday • 7:30 PM</p>
+                            </div>
+                            <div style="display:flex; gap: var(--space-sm);">
+                                <a href="chat-room.html" class="btn btn-primary btn-sm">Open</a>
+                                <button class="btn btn-outline btn-sm">Reschedule</button>
+                            </div>
+                        </div>
+
+                        <div class="session-row">
+                            <div>
+                                <h4 style="margin-bottom: var(--space-xs);">Rohan M.</h4>
+                                <p class="text-secondary" style="margin: 0;">Video session • Saturday • 11:00 AM</p>
+                            </div>
+                            <div style="display:flex; gap: var(--space-sm);">
+                                <a href="video-call.html" class="btn btn-primary btn-sm">Join</a>
+                                <button class="btn btn-outline btn-sm">Reschedule</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="availability" class="card">
+                        <div class="section-header">
+                            <h2>Availability</h2>
+                            <button class="btn btn-outline btn-sm" onclick="showToast('Availability saved.', 'success')">Save Changes</button>
+                        </div>
+
+                        <div class="availability-grid">
+                            <div>
+                                <h4 style="margin-bottom: var(--space-md);">Weekdays</h4>
+                                <div>
+                                    <span class="time-slot">10:00 AM - 12:00 PM</span>
+                                    <span class="time-slot">4:00 PM - 7:00 PM</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: var(--space-md);">Weekends</h4>
+                                <div>
+                                    <span class="time-slot">11:00 AM - 2:00 PM</span>
+                                    <span class="time-slot">6:00 PM - 8:00 PM</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="earnings" class="card">
+                        <div class="section-header">
+                            <h2>Earnings</h2>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">Today</div>
+                                <div class="stat-value">₹1.2k</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">This Week</div>
+                                <div class="stat-value">₹6.4k</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">This Month</div>
+                                <div class="stat-value">₹18k</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Total</div>
+                                <div class="stat-value">₹1.1L</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="profile" class="card">
+                        <div class="section-header">
+                            <h2>Profile Summary</h2>
+                            <a href="specialist-profile.html" class="btn btn-outline btn-sm">Preview Public Profile</a>
+                        </div>
+
+                        <div style="display:grid; gap: var(--space-lg);">
+                            <div>
+                                <h4 style="margin-bottom: var(--space-xs);">Name</h4>
+                                <p class="text-secondary" style="margin:0;" id="profileNameText">Specialist Name</p>
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: var(--space-xs);">Specialization</h4>
+                                <p class="text-secondary" style="margin:0;">Clinical Psychology • CBT • Anxiety & Depression</p>
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: var(--space-xs);">Experience</h4>
+                                <p class="text-secondary" style="margin:0;">6+ years</p>
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: var(--space-xs);">Bio</h4>
+                                <p class="text-secondary" style="margin:0;">Helping clients navigate life transitions, emotional regulation, and long-term healing with empathy and evidence-based care.</p>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Serenity Mindspace</h4>
+                    <p style="color:rgba(255,255,255,0.7);font-size:var(--text-sm);">Professional care with compassion.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Platform</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="specialists.html">Directory</a></li>
+                        <li><a href="specialist-dashboard.html">Dashboard</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="terms.html">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section crisis-resources">
+                    <h4>⚠️ Crisis Resources</h4>
+                    <a href="tel:9152987821" class="crisis-number">iCall — 9152987821</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span class="footer-year"></span> Serenity Mindspace. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const userName = localStorage.getItem('userName') || 'Specialist';
+            const verificationStatus = localStorage.getItem('verificationStatus') || 'pending';
+
+            const specialistName = document.getElementById('specialistName');
+            const profileNameText = document.getElementById('profileNameText');
+            const verificationBadgeText = document.getElementById('verificationBadgeText');
+            const verificationStatusText = document.getElementById('verificationStatusText');
+
+            if (specialistName) specialistName.textContent = userName;
+            if (profileNameText) profileNameText.textContent = userName;
+
+            if (verificationStatus === 'approved') {
+                if (verificationBadgeText) verificationBadgeText.textContent = 'Verified';
+                if (verificationStatusText) verificationStatusText.textContent = 'Approved';
+            } else {
+                if (verificationBadgeText) verificationBadgeText.textContent = 'Verification Pending';
+                if (verificationStatusText) verificationStatusText.textContent = 'Under review';
+            }
+        });
+    </script>
+</body>
+</html>

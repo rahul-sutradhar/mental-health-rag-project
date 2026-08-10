@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Session - Serenity Mindspace</title>
+    <meta name="description" content="Secure video session with your specialist.">
+    <meta name="theme-color" content="#7A9B76">
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        body {
+            padding-top: 80px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 70px;
+            }
+        }
+
+        .video-page {
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, rgba(164,196,160,0.05) 100%);
+            padding: var(--space-xl) 0 var(--space-4xl);
+        }
+
+        .video-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: var(--space-2xl);
+            align-items: start;
+        }
+
+        .video-room {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .video-header {
+            padding: var(--space-xl);
+            border-bottom: 1px solid var(--color-sand);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-lg);
+        }
+
+        .video-user {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .video-user img {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .video-stage {
+            position: relative;
+            background: #111827;
+            min-height: 520px;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+        }
+
+        .video-main {
+            width: 100%;
+            height: 100%;
+            min-height: 520px;
+            display: grid;
+            place-items: center;
+            color: white;
+            text-align: center;
+            background: radial-gradient(circle at center, rgba(122,155,118,0.25) 0%, rgba(17,24,39,1) 70%);
+        }
+
+        .video-main-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: var(--space-lg);
+            border: 4px solid rgba(255,255,255,0.18);
+        }
+
+        .video-self {
+            position: absolute;
+            right: var(--space-lg);
+            bottom: var(--space-lg);
+            width: 180px;
+            height: 120px;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, #374151, #111827);
+            border: 2px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            padding: var(--space-md);
+        }
+
+        .video-controls {
+            padding: var(--space-xl);
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+            border-top: 1px solid var(--color-sand);
+            background: var(--bg-elevated);
+        }
+
+        .control-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-base);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .control-btn.primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .control-btn.warn {
+            background: var(--color-error);
+            color: white;
+        }
+
+        .control-btn.soft {
+            background: var(--color-sand);
+            color: var(--text-primary);
+        }
+
+        .sidebar-card {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            padding: var(--space-xl);
+            margin-bottom: var(--space-xl);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            gap: var(--space-lg);
+            padding: var(--space-sm) 0;
+            border-bottom: 1px solid var(--color-sand);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .session-note {
+            background: rgba(122,155,118,0.08);
+            border-left: 4px solid var(--color-primary);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: var(--space-md);
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 1024px) {
+            .video-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .video-self {
+                width: 130px;
+                height: 90px;
+            }
+
+            .video-main {
+                min-height: 420px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="dashboard.html" class="nav-link active">Dashboard</a></li>
+                <li><a href="specialists.html" class="nav-link">Specialists</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span data-dark-icon>🌙</span></button>
+                <button class="btn btn-ghost" data-action="logout">Logout</button>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="video-page">
+        <div class="container">
+            <div style="margin-bottom: var(--space-xl);">
+                <a href="dashboard.html" class="btn btn-outline btn-sm">← Back to Dashboard</a>
+            </div>
+
+            <div class="video-layout">
+                <div class="video-room">
+                    <div class="video-header">
+                        <div class="video-user">
+                            <img id="videoAvatar" src="https://i.pravatar.cc/150?img=47" alt="Specialist">
+                            <div>
+                                <h3 id="videoName" style="margin-bottom: var(--space-xs);">Dr. Sarah Johnson</h3>
+                                <div style="display:flex; align-items:center; gap:var(--space-sm); font-size:var(--text-sm); color:var(--text-secondary);">
+                                    <span style="width:10px;height:10px;border-radius:50%;background:var(--color-success);display:inline-block;"></span>
+                                    Connected
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+                            Session timer: <strong id="sessionTimer">30:00</strong>
+                        </div>
+                    </div>
+
+                    <div class="video-stage">
+                        <div class="video-main" id="videoMain">
+                            <div>
+                                <img id="videoMainAvatar" class="video-main-avatar" src="https://i.pravatar.cc/150?img=47" alt="Specialist">
+                                <h2 id="videoMainName" style="color:white; margin-bottom: var(--space-sm);">Dr. Sarah Johnson</h2>
+                                <p style="opacity:0.8; margin:0;">Your session is live. Take a breath and begin whenever you're ready.</p>
+                            </div>
+                        </div>
+
+                        <div class="video-self" id="videoSelf">
+                            <div>
+                                <div style="font-size:1.5rem; margin-bottom: var(--space-xs);">🙂</div>
+                                <div style="font-size:var(--text-sm); opacity:0.85;">You</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="video-controls">
+                        <button class="control-btn soft" id="micBtn" onclick="toggleMic()" title="Mute / Unmute">🎤</button>
+                        <button class="control-btn soft" id="camBtn" onclick="toggleCam()" title="Camera On / Off">📷</button>
+                        <button class="control-btn soft" onclick="showToast('Screen share is demo-only here.', 'info')" title="Share Screen">🖥️</button>
+                        <a href="chat-room.html" class="control-btn primary" title="Open Chat" style="text-decoration:none;">💬</a>
+                        <button class="control-btn warn" onclick="endCall()" title="End Call">📞</button>
+                    </div>
+                </div>
+
+                <aside>
+                    <div class="sidebar-card">
+                        <h4 style="margin-bottom: var(--space-lg);">Session Details</h4>
+                        <div class="info-row">
+                            <span class="text-secondary">Specialist</span>
+                            <strong id="detailName">Dr. Sarah Johnson</strong>
+                        </div>
+                        <div class="info-row">
+                            <span class="text-secondary">Type</span>
+                            <strong>Video Call</strong>
+                        </div>
+                        <div class="info-row">
+                            <span class="text-secondary">Date</span>
+                            <strong id="detailDate">Tomorrow</strong>
+                        </div>
+                        <div class="info-row">
+                            <span class="text-secondary">Time</span>
+                            <strong id="detailTime">5:00 PM</strong>
+                        </div>
+                        <div class="info-row">
+                            <span class="text-secondary">Duration</span>
+                            <strong>30 min</strong>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-card">
+                        <h4 style="margin-bottom: var(--space-lg);">Helpful Reminder</h4>
+                        <div class="session-note">
+                            This is your private support space. Try to sit somewhere comfortable and quiet. You can switch to chat anytime if needed.
+                        </div>
+                    </div>
+
+                    <div class="sidebar-card">
+                        <h4 style="margin-bottom: var(--space-lg);">Quick Actions</h4>
+                        <div style="display:grid; gap:var(--space-sm);">
+                            <a href="chat-room.html" class="btn btn-outline btn-full">Open Chat Room</a>
+                            <button class="btn btn-outline btn-full" onclick="showToast('Session notes can be added after the call.', 'info')">Session Notes</button>
+                            <a href="tel:9152987821" class="btn btn-outline btn-full">Call iCall</a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const specialistMap = {
+            1: { name: "Dr. Sarah Johnson", avatar: "https://i.pravatar.cc/150?img=47" },
+            2: { name: "Dr. Michael Chen", avatar: "https://i.pravatar.cc/150?img=33" },
+            3: { name: "Dr. Priya Sharma", avatar: "https://i.pravatar.cc/150?img=32" },
+            4: { name: "Dr. James Wilson", avatar: "https://i.pravatar.cc/150?img=27" }
+        };
+
+        let micOn = true;
+        let camOn = true;
+        let secondsLeft = 30 * 60;
+        let timerRef = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id') || '1';
+            const specialist = specialistMap[id] || specialistMap[1];
+
+            document.getElementById('videoName').textContent = specialist.name;
+            document.getElementById('videoMainName').textContent = specialist.name;
+            document.getElementById('detailName').textContent = specialist.name;
+            document.getElementById('videoAvatar').src = specialist.avatar;
+            document.getElementById('videoMainAvatar').src = specialist.avatar;
+
+            if (params.get('date')) document.getElementById('detailDate').textContent = params.get('date');
+            if (params.get('time')) document.getElementById('detailTime').textContent = params.get('time');
+
+            updateTimer();
+            timerRef = setInterval(() => {
+                secondsLeft--;
+                updateTimer();
+                if (secondsLeft <= 0) {
+                    clearInterval(timerRef);
+                    endCall(true);
+                }
+            }, 1000);
+        });
+
+        function updateTimer() {
+            const min = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+            const sec = String(secondsLeft % 60).padStart(2, '0');
+            document.getElementById('sessionTimer').textContent = `${min}:${sec}`;
+        }
+
+        function toggleMic() {
+            micOn = !micOn;
+            const btn = document.getElementById('micBtn');
+            btn.textContent = micOn ? '🎤' : '🔇';
+            btn.classList.toggle('warn', !micOn);
+            btn.classList.toggle('soft', micOn);
+        }
+
+        function toggleCam() {
+            camOn = !camOn;
+            const btn = document.getElementById('camBtn');
+            const self = document.getElementById('videoSelf');
+            btn.textContent = camOn ? '📷' : '🚫';
+            btn.classList.toggle('warn', !camOn);
+            btn.classList.toggle('soft', camOn);
+
+            if (camOn) {
+                self.innerHTML = `
+                    <div>
+                        <div style="font-size:1.5rem; margin-bottom: var(--space-xs);">🙂</div>
+                        <div style="font-size:var(--text-sm); opacity:0.85;">You</div>
+                    </div>
+                `;
+            } else {
+                self.innerHTML = `
+                    <div>
+                        <div style="font-size:1.5rem; margin-bottom: var(--space-xs);">📷</div>
+                        <div style="font-size:var(--text-sm); opacity:0.85;">Camera Off</div>
+                    </div>
+                `;
+            }
+        }
+
+        function endCall(autoEnd = false) {
+            if (timerRef) clearInterval(timerRef);
+
+            if (!autoEnd) {
+                const ok = confirm('Are you sure you want to end this call?');
+                if (!ok) {
+                    timerRef = setInterval(() => {
+                        secondsLeft--;
+                        updateTimer();
+                        if (secondsLeft <= 0) {
+                            clearInterval(timerRef);
+                            endCall(true);
+                        }
+                    }, 1000);
+                    return;
+                }
+            }
+
+            if (typeof showToast === 'function') {
+                showToast(autoEnd ? 'Session ended. Time is up.' : 'Call ended.', 'info');
+            }
+
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 600);
+        }
+    </script>
+</body>
+</html>

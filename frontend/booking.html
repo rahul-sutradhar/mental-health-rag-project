@@ -1,0 +1,417 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Session - Serenity Mindspace</title>
+    <meta name="description" content="Confirm your booking with a verified mental health specialist.">
+    <meta name="theme-color" content="#7A9B76">
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        .booking-page {
+            padding-top: 100px;
+            padding-bottom: var(--space-4xl);
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, rgba(164,196,160,0.05) 100%);
+        }
+
+        .booking-layout {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: var(--space-2xl);
+            align-items: start;
+        }
+
+        .booking-card,
+        .summary-card {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .summary-card {
+            position: sticky;
+            top: 100px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            gap: var(--space-lg);
+            padding: var(--space-md) 0;
+            border-bottom: 1px solid var(--color-sand);
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .specialist-mini {
+            display: flex;
+            gap: var(--space-md);
+            align-items: center;
+            margin-bottom: var(--space-lg);
+        }
+
+        .specialist-mini img {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .date-chip,
+        .time-chip,
+        .type-chip {
+            display: inline-block;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-full);
+            background: var(--color-sand);
+            font-size: var(--text-sm);
+            margin: 0 var(--space-sm) var(--space-sm) 0;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+
+        .date-chip:hover,
+        .time-chip:hover,
+        .type-chip:hover,
+        .date-chip.active,
+        .time-chip.active,
+        .type-chip.active {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .payment-note {
+            background: rgba(232,196,104,0.12);
+            border: 1px solid rgba(232,196,104,0.3);
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            margin-top: var(--space-lg);
+        }
+
+        @media (max-width: 1024px) {
+            .booking-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-card {
+                position: static;
+            }
+        }
+
+        body {
+            padding-top: 80px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="specialists.html" class="nav-link active">Specialists</a></li>
+                <li><a href="store.html" class="nav-link">Pricing</a></li>
+                <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span data-dark-icon>🌙</span></button>
+                <div class="token-display">
+                    <svg class="token-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+                    </svg>
+                    <span id="bookingTokenCount" data-token-display>0</span> tokens
+                </div>
+                <button class="btn btn-ghost" data-action="logout">Logout</button>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="booking-page">
+        <div class="container">
+            <div style="margin-bottom: var(--space-xl);">
+                <a href="specialists.html" class="btn btn-outline btn-sm">← Back to Specialists</a>
+            </div>
+
+            <div class="booking-layout">
+                <div class="booking-card">
+                    <h1 style="margin-bottom: var(--space-sm);">Confirm Your Booking</h1>
+                    <p class="text-secondary" style="margin-bottom: var(--space-2xl);">
+                        Review and finalize your session details below.
+                    </p>
+
+                    <div class="specialist-mini">
+                        <img id="bookingAvatar" src="https://i.pravatar.cc/150?img=47" alt="Specialist">
+                        <div>
+                            <h3 id="bookingSpecialistName" style="margin-bottom: var(--space-xs);">Dr. Sarah Johnson</h3>
+                            <p id="bookingSpecialistTitle" class="text-secondary" style="margin: 0;">Clinical Psychologist</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-xl);">
+                        <label class="form-label">Session Type</label>
+                        <div id="sessionTypes">
+                            <span class="type-chip active" data-type="chat">Text Chat • 50 💎</span>
+                            <span class="type-chip" data-type="video">Video Call • 100 💎</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-xl);">
+                        <label class="form-label">Choose Date</label>
+                        <div id="dateChips">
+                            <span class="date-chip active">Tomorrow</span>
+                            <span class="date-chip">Friday</span>
+                            <span class="date-chip">Saturday</span>
+                            <span class="date-chip">Sunday</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-xl);">
+                        <label class="form-label">Choose Time</label>
+                        <div id="timeChips">
+                            <span class="time-chip active">10:00 AM</span>
+                            <span class="time-chip">11:30 AM</span>
+                            <span class="time-chip">2:00 PM</span>
+                            <span class="time-chip">4:30 PM</span>
+                            <span class="time-chip">6:00 PM</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-xl);">
+                        <label class="form-label" for="bookingReason">What would you like support with?</label>
+                        <textarea id="bookingReason" class="form-textarea" rows="4" placeholder="Share a little about what you'd like to discuss. This helps the specialist prepare."></textarea>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-xl);">
+                        <label class="form-label" for="bookingNotes">Additional Notes (Optional)</label>
+                        <textarea id="bookingNotes" class="form-textarea" rows="3" placeholder="Anything else you'd like the specialist to know."></textarea>
+                    </div>
+
+                    <div class="payment-note">
+                        <strong>Note:</strong> Tokens will be deducted only when you confirm this booking. You can reschedule later from your dashboard.
+                    </div>
+                </div>
+
+                <aside class="summary-card">
+                    <h3 style="margin-bottom: var(--space-lg);">Booking Summary</h3>
+
+                    <div class="summary-row">
+                        <span class="text-secondary">Specialist</span>
+                        <strong id="summaryName">Dr. Sarah Johnson</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span class="text-secondary">Session Type</span>
+                        <strong id="summaryType">Text Chat</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span class="text-secondary">Date</span>
+                        <strong id="summaryDate">Tomorrow</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span class="text-secondary">Time</span>
+                        <strong id="summaryTime">10:00 AM</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span class="text-secondary">Duration</span>
+                        <strong>30 minutes</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span class="text-secondary">Cost</span>
+                        <strong id="summaryCost">50 💎</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span class="text-secondary">Your Balance</span>
+                        <strong><span id="summaryBalance" data-token-display>0</span> 💎</strong>
+                    </div>
+
+                    <button class="btn btn-primary btn-full btn-lg" style="margin-top: var(--space-xl);" onclick="confirmBooking()">
+                        Confirm Booking
+                    </button>
+
+                    <a href="store.html" class="btn btn-outline btn-full" style="margin-top: var(--space-md);">
+                        Buy More Tokens
+                    </a>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="bookingSuccessModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-icon">🎉</div>
+                <h3 class="modal-title">Booking Confirmed!</h3>
+                <p class="modal-subtitle">Your session has been scheduled successfully.</p>
+            </div>
+            <div class="modal-body">
+                <div class="card card-flat">
+                    <p style="margin:0; text-align:center;">
+                        Your specialist will be ready at the scheduled time. You can view or manage this booking from your dashboard.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <a href="dashboard.html" class="btn btn-primary">Go to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const specialistsData = {
+            1: { name: "Dr. Sarah Johnson", title: "Clinical Psychologist", avatar: "https://i.pravatar.cc/150?img=47" },
+            2: { name: "Dr. Michael Chen", title: "Psychiatrist", avatar: "https://i.pravatar.cc/150?img=33" },
+            3: { name: "Dr. Priya Sharma", title: "Licensed Counselor", avatar: "https://i.pravatar.cc/150?img=32" },
+            4: { name: "Dr. James Wilson", title: "Trauma Specialist", avatar: "https://i.pravatar.cc/150?img=27" }
+        };
+
+        let selectedType = "chat";
+        let selectedDate = "Tomorrow";
+        let selectedTime = "10:00 AM";
+
+        function getTypeCost(type) {
+            return type === "video" ? 100 : 50;
+        }
+
+        function getTypeLabel(type) {
+            return type === "video" ? "Video Call" : "Text Chat";
+        }
+
+        function updateSummary() {
+            document.getElementById("summaryType").textContent = getTypeLabel(selectedType);
+            document.getElementById("summaryDate").textContent = selectedDate;
+            document.getElementById("summaryTime").textContent = selectedTime;
+            document.getElementById("summaryCost").textContent = `${getTypeCost(selectedType)} 💎`;
+
+            const balEl = document.getElementById("summaryBalance");
+            const topBalEl = document.getElementById("bookingTokenCount");
+            if (typeof getTokens === "function") {
+                const tokens = getTokens();
+                if (balEl) balEl.textContent = tokens;
+                if (topBalEl) topBalEl.textContent = tokens;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("id") || "1";
+            const specialist = specialistsData[id] || specialistsData[1];
+
+            document.getElementById("bookingSpecialistName").textContent = specialist.name;
+            document.getElementById("bookingSpecialistTitle").textContent = specialist.title;
+            document.getElementById("bookingAvatar").src = specialist.avatar;
+            document.getElementById("summaryName").textContent = specialist.name;
+
+            const urlType = params.get("type");
+            const urlDate = params.get("date");
+            const urlTime = params.get("time");
+            const urlNotes = params.get("notes");
+
+            if (urlType === "video" || urlType === "chat") selectedType = urlType;
+            if (urlDate) selectedDate = urlDate;
+            if (urlTime) selectedTime = urlTime;
+            if (urlNotes) document.getElementById("bookingNotes").value = urlNotes;
+
+            document.querySelectorAll(".type-chip").forEach(chip => {
+                if (chip.dataset.type === selectedType) chip.classList.add("active");
+                else chip.classList.remove("active");
+
+                chip.addEventListener("click", () => {
+                    document.querySelectorAll(".type-chip").forEach(c => c.classList.remove("active"));
+                    chip.classList.add("active");
+                    selectedType = chip.dataset.type;
+                    updateSummary();
+                });
+            });
+
+            document.querySelectorAll(".date-chip").forEach(chip => {
+                if (chip.textContent === selectedDate) chip.classList.add("active");
+                else chip.classList.remove("active");
+
+                chip.addEventListener("click", () => {
+                    document.querySelectorAll(".date-chip").forEach(c => c.classList.remove("active"));
+                    chip.classList.add("active");
+                    selectedDate = chip.textContent;
+                    updateSummary();
+                });
+            });
+
+            document.querySelectorAll(".time-chip").forEach(chip => {
+                if (chip.textContent === selectedTime) chip.classList.add("active");
+                else chip.classList.remove("active");
+
+                chip.addEventListener("click", () => {
+                    document.querySelectorAll(".time-chip").forEach(c => c.classList.remove("active"));
+                    chip.classList.add("active");
+                    selectedTime = chip.textContent;
+                    updateSummary();
+                });
+            });
+
+            updateSummary();
+        });
+
+        function confirmBooking() {
+            const cost = getTypeCost(selectedType);
+            const reason = document.getElementById("bookingReason").value.trim();
+            const notes = document.getElementById("bookingNotes").value.trim();
+
+            if (!reason) {
+                showToast("Please tell us what you'd like support with.", "warning");
+                return;
+            }
+
+            if (typeof getTokens === "function" && typeof setTokens === "function") {
+                const currentTokens = getTokens();
+                if (currentTokens < cost) {
+                    showToast("You do not have enough tokens for this booking.", "error");
+                    return;
+                }
+                setTokens(currentTokens - cost);
+            }
+
+            if (typeof saveBooking === "function") {
+                const specialistName = document.getElementById("summaryName").textContent;
+                saveBooking({
+                    specialist: specialistName,
+                    type: getTypeLabel(selectedType),
+                    date: selectedDate,
+                    time: selectedTime,
+                    cost: cost,
+                    reason: reason,
+                    notes: notes
+                });
+            }
+
+            updateSummary();
+            document.getElementById("bookingSuccessModal").style.display = "flex";
+            showToast("Booking confirmed successfully!", "success");
+        }
+    </script>
+</body>
+</html>

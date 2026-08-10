@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Specialist Chat Room - Serenity Mindspace</title>
+    <meta name="description" content="Secure chat room for you and your specialist.">
+    <meta name="theme-color" content="#7A9B76">
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        body {
+            padding-top: 80px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 70px;
+            }
+        }
+
+        .room-wrapper {
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, rgba(164,196,160,0.05) 100%);
+            padding: var(--space-xl) 0 var(--space-4xl);
+        }
+
+        .room-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: var(--space-2xl);
+            align-items: start;
+        }
+
+        .room-card {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .room-header {
+            padding: var(--space-xl);
+            border-bottom: 1px solid var(--color-sand);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-lg);
+        }
+
+        .room-user {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .room-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .room-messages {
+            height: 520px;
+            overflow-y: auto;
+            padding: var(--space-xl);
+            background: rgba(250,247,242,0.55);
+        }
+
+        .room-message {
+            display: flex;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .room-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .room-bubble {
+            max-width: 75%;
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-lg);
+            background: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .room-message.user .room-bubble {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .room-time {
+            font-size: var(--text-xs);
+            color: var(--text-tertiary);
+            margin-top: var(--space-xs);
+        }
+
+        .room-message.user .room-time {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .room-input {
+            padding: var(--space-xl);
+            border-top: 1px solid var(--color-sand);
+            background: var(--bg-elevated);
+        }
+
+        .room-input-wrap {
+            display: flex;
+            gap: var(--space-md);
+            align-items: flex-end;
+        }
+
+        .room-textarea {
+            flex: 1;
+            min-height: 52px;
+            max-height: 140px;
+            resize: vertical;
+        }
+
+        .sidebar-card {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            padding: var(--space-xl);
+            margin-bottom: var(--space-xl);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            gap: var(--space-lg);
+            padding: var(--space-sm) 0;
+            border-bottom: 1px solid var(--color-sand);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .quick-note {
+            background: rgba(122,155,118,0.08);
+            border-left: 4px solid var(--color-primary);
+            padding: var(--space-md);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+        }
+
+        .typing-row {
+            display: flex;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .typing-bubble {
+            background: white;
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        @media (max-width: 1024px) {
+            .room-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="dashboard.html" class="nav-link active">Dashboard</a></li>
+                <li><a href="specialists.html" class="nav-link">Specialists</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span data-dark-icon>🌙</span></button>
+                <button class="btn btn-ghost" data-action="logout">Logout</button>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="room-wrapper">
+        <div class="container">
+            <div style="margin-bottom: var(--space-xl);">
+                <a href="dashboard.html" class="btn btn-outline btn-sm">← Back to Dashboard</a>
+            </div>
+
+            <div class="room-layout">
+                <div class="room-card">
+                    <div class="room-header">
+                        <div class="room-user">
+                            <img id="roomAvatar" class="room-avatar" src="https://i.pravatar.cc/150?img=47" alt="Specialist">
+                            <div>
+                                <h3 id="roomName" style="margin-bottom: var(--space-xs);">Dr. Sarah Johnson</h3>
+                                <div style="display:flex; align-items:center; gap:var(--space-sm); font-size:var(--text-sm); color:var(--text-secondary);">
+                                    <span style="width:10px;height:10px;border-radius:50%;background:var(--color-success);display:inline-block;"></span>
+                                    Online now
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:var(--space-sm);">
+                            <a href="video-call.html" class="btn btn-outline btn-sm">Start Video</a>
+                            <button class="btn btn-outline btn-sm" onclick="clearRoom()">Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="room-messages" id="roomMessages">
+                        <div class="room-message">
+                            <img class="room-avatar" src="https://i.pravatar.cc/150?img=47" alt="Specialist" style="width:40px;height:40px;">
+                            <div class="room-bubble">
+                                Hello, welcome to your secure chat room. Take your time — what would you like to talk about today?
+                                <div class="room-time">Just now</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="room-input">
+                        <div class="room-input-wrap">
+                            <textarea id="roomInput" class="form-textarea room-textarea" placeholder="Type your message..." rows="2"></textarea>
+                            <button class="btn btn-primary" onclick="sendRoomMessage()">Send</button>
+                        </div>
+                    </div>
+                </div>
+
+                <aside>
+                    <div class="sidebar-card">
+                        <h4 style="margin-bottom: var(--space-lg);">Session Info</h4>
+                        <div class="info-row">
+                            <span class="text-secondary">Type</span>
+                            <strong id="sessionTypeInfo">Text Chat</strong>
+                        </div>
+                        <div class="info-row">
+                            <span class="text-secondary">Date</span>
+                            <strong id="sessionDateInfo">Tomorrow</strong>
+                        </div>
+                        <div class="info-row">
+                            <span class="text-secondary">Time</span>
+                            <strong id="sessionTimeInfo">5:00 PM</strong>
+                        </div>
+                        <div class="info-row">
+                            <span class="text-secondary">Duration</span>
+                            <strong>30 min</strong>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-card">
+                        <h4 style="margin-bottom: var(--space-lg);">Quick Notes</h4>
+                        <div class="quick-note">
+                            This chat is private and intended for support during your scheduled session. If you are in immediate danger, contact a crisis helpline right away.
+                        </div>
+                        <div style="margin-top: var(--space-lg);">
+                            <a href="tel:9152987821" class="btn btn-outline btn-full">Call iCall</a>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-card">
+                        <h4 style="margin-bottom: var(--space-lg);">Helpful Actions</h4>
+                        <div style="display:grid; gap:var(--space-sm);">
+                            <button class="btn btn-outline btn-full" onclick="insertPrompt('I have been feeling overwhelmed lately.')">Feeling overwhelmed</button>
+                            <button class="btn btn-outline btn-full" onclick="insertPrompt('I want to talk about anxiety and stress.')">Anxiety & stress</button>
+                            <button class="btn btn-outline btn-full" onclick="insertPrompt('I need help with relationships.')">Relationships</button>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const specialistMap = {
+            1: { name: "Dr. Sarah Johnson", avatar: "https://i.pravatar.cc/150?img=47" },
+            2: { name: "Dr. Michael Chen", avatar: "https://i.pravatar.cc/150?img=33" },
+            3: { name: "Dr. Priya Sharma", avatar: "https://i.pravatar.cc/150?img=32" },
+            4: { name: "Dr. James Wilson", avatar: "https://i.pravatar.cc/150?img=27" }
+        };
+
+        let roomHistory = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id') || '1';
+            const specialist = specialistMap[id] || specialistMap[1];
+
+            document.getElementById('roomName').textContent = specialist.name;
+            document.getElementById('roomAvatar').src = specialist.avatar;
+            document.getElementById('sessionTypeInfo').textContent = params.get('type') || 'Text Chat';
+            document.getElementById('sessionDateInfo').textContent = params.get('date') || 'Tomorrow';
+            document.getElementById('sessionTimeInfo').textContent = params.get('time') || '5:00 PM';
+
+            const saved = localStorage.getItem(`chat_room_${id}`);
+            if (saved) {
+                roomHistory = JSON.parse(saved);
+                renderHistory();
+            }
+
+            const input = document.getElementById('roomInput');
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendRoomMessage();
+                }
+            });
+        });
+
+        function saveHistory() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id') || '1';
+            localStorage.setItem(`chat_room_${id}`, JSON.stringify(roomHistory));
+        }
+
+        function renderHistory() {
+            const box = document.getElementById('roomMessages');
+            box.innerHTML = '';
+
+            if (!roomHistory.length) {
+                box.innerHTML = `
+                    <div class="room-message">
+                        <img class="room-avatar" src="${document.getElementById('roomAvatar').src}" alt="Specialist" style="width:40px;height:40px;">
+                        <div class="room-bubble">
+                            Hello, welcome to your secure chat room. Take your time — what would you like to talk about today?
+                            <div class="room-time">Just now</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            roomHistory.forEach(m => {
+                const div = document.createElement('div');
+                div.className = `room-message ${m.sender === 'user' ? 'user' : ''}`;
+
+                if (m.sender === 'user') {
+                    div.innerHTML = `
+                        <div class="room-bubble">
+                            ${escapeHtml(m.text)}
+                            <div class="room-time">${m.time}</div>
+                        </div>
+                        <div class="room-avatar" style="width:40px;height:40px;background:var(--color-primary);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;">You</div>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <img class="room-avatar" src="${document.getElementById('roomAvatar').src}" alt="Specialist" style="width:40px;height:40px;">
+                        <div class="room-bubble">
+                            ${escapeHtml(m.text)}
+                            <div class="room-time">${m.time}</div>
+                        </div>
+                    `;
+                }
+
+                box.appendChild(div);
+            });
+
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function sendRoomMessage() {
+            const input = document.getElementById('roomInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            roomHistory.push({ sender: 'user', text, time });
+            saveHistory();
+            renderHistory();
+            input.value = '';
+
+            showTyping();
+
+            setTimeout(() => {
+                hideTyping();
+                const reply = getRoomReply(text);
+                const replyTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                roomHistory.push({ sender: 'specialist', text: reply, time: replyTime });
+                saveHistory();
+                renderHistory();
+            }, 1000);
+        }
+
+        function showTyping() {
+            const box = document.getElementById('roomMessages');
+            const div = document.createElement('div');
+            div.id = 'roomTyping';
+            div.className = 'typing-row';
+            div.innerHTML = `
+                <img class="room-avatar" src="${document.getElementById('roomAvatar').src}" alt="Specialist" style="width:40px;height:40px;">
+                <div class="typing-bubble">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function hideTyping() {
+            const t = document.getElementById('roomTyping');
+            if (t) t.remove();
+        }
+
+        function getRoomReply(text) {
+            const msg = text.toLowerCase();
+            if (msg.includes('overwhelmed') || msg.includes('stress')) {
+                return "Thank you for sharing that. Feeling overwhelmed can be exhausting. Let's slow down and focus on what feels most intense right now.";
+            }
+            if (msg.includes('anxiety')) {
+                return "I hear you. Anxiety can make even small things feel heavy. Can you tell me what situations have been triggering it most recently?";
+            }
+            if (msg.includes('relationship')) {
+                return "Relationships can bring up a lot of emotions. Would you like to talk about a recent situation or the general pattern you've been noticing?";
+            }
+            return "Thank you for opening up. I'm here with you, and we can go step by step. Tell me more whenever you're ready.";
+        }
+
+        function insertPrompt(text) {
+            document.getElementById('roomInput').value = text;
+            document.getElementById('roomInput').focus();
+        }
+
+        function clearRoom() {
+            if (!confirm('Clear this chat room history?')) return;
+            roomHistory = [];
+            saveHistory();
+            renderHistory();
+        }
+    </script>
+</body>
+</html>

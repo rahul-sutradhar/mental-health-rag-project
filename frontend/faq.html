@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Frequently asked questions about Serenity Mindspace — tokens, sessions, specialists, privacy, and more.">
+    <meta property="og:title" content="FAQ — Serenity Mindspace">
+    <meta property="og:description" content="Find answers to common questions about tokens, sessions, specialists, privacy and more.">
+    <meta name="theme-color" content="#7A9B76">
+    <title>FAQ — Serenity Mindspace</title>
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <link rel="manifest" href="static/manifest.json">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        body {
+            padding-top: 80px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 70px;
+            }
+        }
+
+        .faq-hero {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            color: white;
+            padding: 120px 0 60px;
+            text-align: center;
+        }
+
+        .faq-hero h1 {
+            color: white;
+            margin-bottom: var(--space-lg);
+        }
+
+        .faq-categories {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: var(--space-3xl);
+        }
+
+        .faq-cat-btn {
+            padding: 8px 20px;
+            border: 1.5px solid var(--color-stone);
+            border-radius: var(--radius-full);
+            background: none;
+            cursor: pointer;
+            font-family: var(--font-display);
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            transition: all var(--transition-fast);
+        }
+
+        .faq-cat-btn.active,
+        .faq-cat-btn:hover {
+            border-color: var(--color-primary);
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .faq-item {
+            border: 1px solid var(--color-sand);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-md);
+            overflow: hidden;
+        }
+
+        .faq-question {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-xl);
+            cursor: pointer;
+            font-family: var(--font-display);
+            font-weight: 600;
+            background: var(--bg-elevated);
+            transition: background var(--transition-fast);
+        }
+
+        .faq-question:hover {
+            background: rgba(122, 155, 118, 0.06);
+        }
+
+        .faq-answer {
+            display: none;
+            padding: 0 var(--space-xl) var(--space-xl);
+            color: var(--text-secondary);
+            line-height: 1.8;
+            background: var(--bg-elevated);
+        }
+
+        .faq-answer.open {
+            display: block;
+        }
+
+        .faq-chevron {
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+            color: var(--color-primary);
+        }
+
+        .faq-chevron.open {
+            transform: rotate(180deg);
+        }
+
+        .search-bar {
+            max-width: 560px;
+            margin: 0 auto var(--space-3xl);
+            display: flex;
+            gap: var(--space-sm);
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: var(--space-md) var(--space-lg);
+            border: 2px solid var(--color-sand);
+            border-radius: var(--radius-full);
+            font-family: var(--font-display);
+            font-size: var(--text-base);
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+                <li><a href="specialists.html" class="nav-link">Specialists</a></li>
+                <li><a href="faq.html" class="nav-link active">FAQ</a></li>
+                <li><a href="contact.html" class="nav-link">Contact</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode">
+                    <span data-dark-icon>🌙</span>
+                </button>
+                <a href="login.html" class="btn btn-outline" id="navLoginBtn">Login</a>
+                <a href="login.html?signup=true" class="btn btn-primary" id="navSignupBtn">Sign Up</a>
+                <a href="dashboard.html" class="btn btn-outline" id="navDashBtn" style="display:none;">Dashboard</a>
+                <button class="btn btn-ghost" data-action="logout" id="navLogoutBtn" style="display:none;">Logout</button>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <section class="faq-hero">
+        <div class="container">
+            <h1>Frequently Asked Questions</h1>
+            <p style="opacity:0.9; font-size:var(--text-lg);">Find answers to common questions about Serenity Mindspace.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container container-narrow">
+            <div class="search-bar">
+                <input type="text" id="faqSearch" placeholder="Search questions..." oninput="filterFAQ(this.value)">
+            </div>
+
+            <div class="faq-categories">
+                <button class="faq-cat-btn active" onclick="filterCategory('all', this)">All</button>
+                <button class="faq-cat-btn" onclick="filterCategory('general', this)">General</button>
+                <button class="faq-cat-btn" onclick="filterCategory('tokens', this)">Tokens</button>
+                <button class="faq-cat-btn" onclick="filterCategory('specialists', this)">Specialists</button>
+                <button class="faq-cat-btn" onclick="filterCategory('privacy', this)">Privacy</button>
+                <button class="faq-cat-btn" onclick="filterCategory('technical', this)">Technical</button>
+            </div>
+
+            <div id="faqList">
+                <div class="faq-item" data-category="general">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        What is Serenity Mindspace?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Serenity Mindspace is a mental wellness platform that connects people with compassionate AI support and licensed mental health specialists. You can chat with our AI 24/7 or book text/video sessions with verified professionals.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="general">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Is Serenity Mindspace a substitute for emergency care?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        No. If you are in immediate danger or experiencing a mental health emergency, please call iCall (9152987821) or Vandrevala Foundation (1860-2662-345) or emergency services (112) immediately. Serenity Mindspace is a support tool, not an emergency service.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="general">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Who can use Serenity Mindspace?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Anyone aged 18 or older can create an account. We support users across India and internationally. Specialists must hold valid licences in their practising jurisdiction.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="general">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        How do I get started?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Sign up for free, complete the optional wellness assessment, and choose your support type — AI chat (first 10 messages free), or a specialist session. You receive 100 welcome tokens on signup.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="tokens">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        What are tokens and how do I get them?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Tokens are Serenity Mindspace's virtual currency. You receive 100 free tokens on signup. Additional tokens can be purchased in the Token Store (100 tokens for ₹99, 500 for ₹449, 1,000 for ₹799). You can also win 50 bonus tokens daily via the Lucky Vault (1% chance).
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="tokens">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        How many tokens does each service cost?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        AI chat: first 10 messages are free, then 5 tokens per message. Specialist text chat: 50 tokens per 30-minute session. Specialist video call: 100 tokens per 30-minute session.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="tokens">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Are tokens refundable?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Tokens are generally non-refundable once used. If a session could not be completed due to a verifiable platform error or specialist no-show, please contact support within 48 hours for a review.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="tokens">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Do tokens expire?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Tokens do not expire as long as your account remains active. Accounts inactive for more than 12 months may be subject to token forfeiture with 30 days' notice.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="specialists">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        How are specialists verified?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Every specialist submits their government ID, degree certificate, and practising licence. Our admin team manually reviews and verifies each document before the specialist's profile goes live. Verified specialists display a blue ✓ badge.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="specialists">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Can I choose my specialist?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Yes. Browse our Specialists directory, filter by specialisation, language, experience, and availability, and book directly with the specialist of your choice.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="specialists">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        What if I'm not happy with a session?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        You can rate and review every session. If you have a serious concern about a specialist's conduct, contact support and we will investigate within 48 hours. Documented misconduct results in immediate removal.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="specialists">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        How do I become a specialist on Serenity?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Create an account and select "I'm a specialist." Upload your credentials (Aadhaar, degree, practising licence), write your bio, and set your availability. Our admin team will review your application within 3–5 business days.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="privacy">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Are my sessions private?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Yes. Conversations are end-to-end encrypted and only accessible to you and your specialist. We never share your conversation content with third parties for advertising. See our Privacy Policy for full details.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="privacy">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Can I delete my data?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Yes. You can delete your account and all associated data from your profile settings. You may also request data export or specific deletions by emailing privacy@serenitymindspace.com. We respond within 30 days.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="privacy">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Does Serenity sell my data?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Never. We do not sell personal data to advertisers or data brokers. Serenity Mindspace products are ad-free. Data is used only to provide and improve the service as described in our Privacy Policy.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="technical">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        What devices and browsers are supported?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Serenity Mindspace works on all modern browsers (Chrome, Firefox, Safari, Edge) on desktop and mobile. Video calls require camera and microphone access. We recommend Chrome or Firefox for the best experience.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="technical">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        The video call isn't working. What should I do?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        1. Ensure you've allowed camera and microphone permissions in your browser. 2. Try refreshing the page. 3. Check your internet connection. 4. Try a different browser. 5. If the issue persists, contact support — we'll investigate within 4 hours.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="technical">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Is there a mobile app?
+                        <span class="faq-chevron">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        Currently Serenity Mindspace is a Progressive Web App (PWA) — you can "Add to Home Screen" from your mobile browser for an app-like experience. Dedicated iOS and Android apps are on our roadmap.
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align:center; margin-top:var(--space-3xl); padding:var(--space-3xl); background:var(--bg-elevated); border-radius:var(--radius-lg);">
+                <h3>Still have questions?</h3>
+                <p class="text-secondary" style="margin:var(--space-md) 0 var(--space-xl);">Our support team typically responds within 24 hours.</p>
+                <a href="contact.html" class="btn btn-primary">Contact Support</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Serenity Mindspace</h4>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Help</h4>
+                    <ul class="footer-links">
+                        <li><a href="faq.html">FAQ</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="privacy.html">Privacy</a></li>
+                        <li><a href="terms.html">Terms</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section crisis-resources">
+                    <h4>⚠️ Crisis</h4>
+                    <a href="tel:9152987821" class="crisis-number">iCall — 9152987821</a>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; <span id="footerYear"></span> Serenity Mindspace.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById("footerYear").textContent = new Date().getFullYear();
+
+        function toggleFAQ(el) {
+            const answer = el.nextElementSibling;
+            const chevron = el.querySelector(".faq-chevron");
+            answer.classList.toggle("open");
+            chevron.classList.toggle("open");
+        }
+
+        function filterCategory(cat, btn) {
+            document.querySelectorAll(".faq-cat-btn").forEach(function (b) {
+                b.classList.remove("active");
+            });
+
+            btn.classList.add("active");
+
+            document.querySelectorAll(".faq-item").forEach(function (item) {
+                item.style.display = (cat === "all" || item.dataset.category === cat) ? "" : "none";
+            });
+        }
+
+        function filterFAQ(query) {
+            const q = query.toLowerCase();
+
+            document.querySelectorAll(".faq-item").forEach(function (item) {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(q) ? "" : "none";
+            });
+        }
+    </script>
+</body>
+</html>

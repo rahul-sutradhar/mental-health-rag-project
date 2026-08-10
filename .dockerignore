@@ -1,0 +1,22 @@
+# Ignore Python virtual environment and caches
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore local database and configurations
+mindmate.db
+.env
+.env.example
+
+# Ignore Git version control
+.git/
+.gitignore
+.github/
+
+# Ignore decoupled static frontend files (hosted on GitHub Pages)
+frontend/
+static/
+templates/
+trash/

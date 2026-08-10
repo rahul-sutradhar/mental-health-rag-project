@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Specialist Profile - Serenity Mindspace</title>
+    <meta name="description" content="View specialist details, experience, specialties, reviews, and book a session.">
+    <meta name="theme-color" content="#7A9B76">
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        .profile-page {
+            padding-top: 100px;
+            padding-bottom: var(--space-4xl);
+            background: var(--bg-primary);
+            min-height: 100vh;
+        }
+
+        .profile-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--space-2xl);
+            align-items: start;
+        }
+
+        .profile-header-card {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .profile-top {
+            display: flex;
+            gap: var(--space-xl);
+            align-items: center;
+        }
+
+        .profile-avatar-lg {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .profile-meta h1 {
+            margin-bottom: var(--space-sm);
+        }
+
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+            color: var(--text-secondary);
+            font-size: var(--text-sm);
+            margin-bottom: var(--space-md);
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+            margin-top: var(--space-md);
+        }
+
+        .tag {
+            padding: var(--space-xs) var(--space-md);
+            border-radius: var(--radius-full);
+            background: rgba(122,155,118,0.1);
+            color: var(--color-primary-dark);
+            font-size: var(--text-sm);
+        }
+
+        .info-card {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-lg);
+            padding: var(--space-2xl);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .booking-card {
+            position: sticky;
+            top: 100px;
+            background: var(--bg-elevated);
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl);
+            box-shadow: var(--shadow-md);
+        }
+
+        .review-item {
+            padding: var(--space-lg) 0;
+            border-bottom: 1px solid var(--color-sand);
+        }
+
+        .review-item:last-child {
+            border-bottom: none;
+        }
+
+        .time-chip {
+            display: inline-block;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-full);
+            background: var(--color-sand);
+            font-size: var(--text-sm);
+            margin: 0 var(--space-sm) var(--space-sm) 0;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+
+        .time-chip:hover,
+        .time-chip.active {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        @media (max-width: 1024px) {
+            .profile-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .booking-card {
+                position: static;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .profile-top {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        body {
+            padding-top: 80px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="specialists.html" class="nav-link active">Specialists</a></li>
+                <li><a href="store.html" class="nav-link">Pricing</a></li>
+                <li><a href="ai-chat.html" class="nav-link">AI Chat</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span data-dark-icon>🌙</span></button>
+                <a href="login.html" class="btn btn-outline" id="navLoginBtn">Login</a>
+                <a href="login.html?signup=true" class="btn btn-primary" id="navSignupBtn">Sign Up</a>
+                <a href="dashboard.html" class="btn btn-outline" id="navDashBtn" style="display:none">Dashboard</a>
+                <button class="btn btn-ghost" data-action="logout" id="navLogoutBtn" style="display:none">Logout</button>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="profile-page">
+        <div class="container">
+            <div style="margin-bottom: var(--space-xl);">
+                <a href="specialists.html" class="btn btn-outline btn-sm">← Back to Specialists</a>
+            </div>
+
+            <div class="profile-layout">
+                <div>
+                    <div class="profile-header-card">
+                        <div class="profile-top">
+                            <img id="profileAvatar" src="https://i.pravatar.cc/150?img=47" alt="Specialist" class="profile-avatar-lg">
+
+                            <div class="profile-meta">
+                                <h1 id="profileName">Dr. Sarah Johnson</h1>
+                                <p id="profileTitle" style="font-size: var(--text-lg); color: var(--text-secondary); margin-bottom: var(--space-md);">Clinical Psychologist</p>
+
+                                <div class="meta-row">
+                                    <span id="profileRating">⭐⭐⭐⭐⭐ 4.9 (127 reviews)</span>
+                                    <span id="profileExperience">💼 8 years experience</span>
+                                    <span id="profileLanguages">🗣️ English, Hindi</span>
+                                </div>
+
+                                <div class="tag-list" id="profileTags">
+                                    <span class="tag">Anxiety & Depression</span>
+                                    <span class="tag">CBT</span>
+                                    <span class="tag">Trauma Recovery</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3 style="margin-bottom: var(--space-md);">About</h3>
+                        <p id="profileBio" class="text-secondary" style="margin: 0;">
+                            I believe in creating a safe, non-judgmental space where you can explore your thoughts and feelings. Together, we'll work on building resilience and finding practical strategies for lasting change. My approach is collaborative, compassionate, and rooted in evidence-based therapy.
+                        </p>
+                    </div>
+
+                    <div class="info-card">
+                        <h3 style="margin-bottom: var(--space-md);">Specialties</h3>
+                        <ul style="padding-left: var(--space-xl); color: var(--text-secondary); margin: 0;">
+                            <li>Anxiety disorders</li>
+                            <li>Depression and low mood</li>
+                            <li>Stress management</li>
+                            <li>Trauma-informed support</li>
+                            <li>Cognitive Behavioral Therapy (CBT)</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card">
+                        <h3 style="margin-bottom: var(--space-md);">Session Types</h3>
+                        <div class="tag-list">
+                            <span class="tag">💬 Text Chat</span>
+                            <span class="tag">📹 Video Call</span>
+                            <span class="tag">🕒 30-Minute Sessions</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-md); margin-bottom:var(--space-md);">
+                            <h3 style="margin:0;">Reviews</h3>
+                            <span class="badge badge-primary">4.9 Average</span>
+                        </div>
+
+                        <div class="review-item">
+                            <div style="display:flex; justify-content:space-between; gap:var(--space-md); margin-bottom:var(--space-sm);">
+                                <strong>Aarav S.</strong>
+                                <span style="font-size:var(--text-sm); color:var(--text-tertiary);">2 weeks ago</span>
+                            </div>
+                            <div style="margin-bottom:var(--space-sm);">⭐⭐⭐⭐⭐</div>
+                            <p class="text-secondary" style="margin:0;">Very understanding and easy to talk to. I felt genuinely heard and left the session feeling calmer and more hopeful.</p>
+                        </div>
+
+                        <div class="review-item">
+                            <div style="display:flex; justify-content:space-between; gap:var(--space-md); margin-bottom:var(--space-sm);">
+                                <strong>Priya K.</strong>
+                                <span style="font-size:var(--text-sm); color:var(--text-tertiary);">1 month ago</span>
+                            </div>
+                            <div style="margin-bottom:var(--space-sm);">⭐⭐⭐⭐⭐</div>
+                            <p class="text-secondary" style="margin:0;">Practical advice, a very warm approach, and great follow-up suggestions. I would definitely book again.</p>
+                        </div>
+
+                        <div class="review-item">
+                            <div style="display:flex; justify-content:space-between; gap:var(--space-md); margin-bottom:var(--space-sm);">
+                                <strong>Rohan M.</strong>
+                                <span style="font-size:var(--text-sm); color:var(--text-tertiary);">2 months ago</span>
+                            </div>
+                            <div style="margin-bottom:var(--space-sm);">⭐⭐⭐⭐⭐</div>
+                            <p class="text-secondary" style="margin:0;">Compassionate, patient, and skilled. I appreciated how safe the session felt.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="booking-card">
+                    <h3 style="margin-bottom: var(--space-md);">Book a Session</h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-lg);">
+                        Choose your preferred session type and time.
+                    </p>
+
+                    <div class="card card-flat" style="margin-bottom: var(--space-lg);">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:var(--space-sm);">
+                            <span>Chat Session</span>
+                            <strong>50 💎</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>Video Session</span>
+                            <strong>100 💎</strong>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-lg);">
+                        <label class="form-label">Session Type</label>
+                        <select id="sessionType" class="form-select">
+                            <option value="chat">Text Chat</option>
+                            <option value="video">Video Call</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-lg);">
+                        <label class="form-label">Select Date</label>
+                        <input type="date" id="bookingDate" class="form-input">
+                    </div>
+
+                    <div style="margin-bottom: var(--space-lg);">
+                        <label class="form-label">Available Times</label>
+                        <div id="timeSlots">
+                            <span class="time-chip active">10:00 AM</span>
+                            <span class="time-chip">11:30 AM</span>
+                            <span class="time-chip">2:00 PM</span>
+                            <span class="time-chip">4:30 PM</span>
+                            <span class="time-chip">6:00 PM</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-lg);">
+                        <label class="form-label">Notes (Optional)</label>
+                        <textarea id="bookingNotes" class="form-textarea" rows="4" placeholder="Mention anything you'd like the specialist to know before the session..."></textarea>
+                    </div>
+
+                    <button class="btn btn-primary btn-full btn-lg" onclick="bookSession()">
+                        Continue to Booking
+                    </button>
+
+                    <p style="margin-top: var(--space-md); font-size: var(--text-xs); color: var(--text-tertiary); text-align:center;">
+                        Your booking request will be confirmed on the next page.
+                    </p>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Serenity Mindspace</h4>
+                    <p style="color:rgba(255,255,255,0.7);font-size:var(--text-sm);">Your safe space for mental wellness.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Platform</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="specialists.html">Specialists</a></li>
+                        <li><a href="store.html">Pricing</a></li>
+                        <li><a href="ai-chat.html">AI Chat</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul class="footer-links">
+                        <li><a href="faq.html">FAQ</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="terms.html">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section crisis-resources">
+                    <h4>⚠️ Crisis Resources</h4>
+                    <a href="tel:9152987821" class="crisis-number">iCall — 9152987821</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span class="footer-year"></span> Serenity Mindspace. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());
+
+        document.querySelectorAll('.time-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+            });
+        });
+
+        const specialistsData = {
+            1: {
+                name: "Dr. Sarah Johnson",
+                title: "Clinical Psychologist",
+                avatar: "https://i.pravatar.cc/150?img=47",
+                rating: "⭐⭐⭐⭐⭐ 4.9 (127 reviews)",
+                experience: "💼 8 years experience",
+                languages: "🗣️ English, Hindi",
+                tags: ["Anxiety & Depression", "CBT", "Trauma Recovery"],
+                bio: "I believe in creating a safe, non-judgmental space where you can explore your thoughts and feelings. Together, we'll work on building resilience and finding practical strategies for lasting change. My approach is collaborative, compassionate, and rooted in evidence-based therapy."
+            },
+            2: {
+                name: "Dr. Michael Chen",
+                title: "Psychiatrist",
+                avatar: "https://i.pravatar.cc/150?img=33",
+                rating: "⭐⭐⭐⭐⭐ 4.8 (93 reviews)",
+                experience: "💼 12 years experience",
+                languages: "🗣️ English, Mandarin",
+                tags: ["Depression", "Anxiety Disorders", "Medication Management"],
+                bio: "My approach combines medication management with evidence-based therapy. I'm here to help you understand your mental health and create a comprehensive treatment plan."
+            },
+            3: {
+                name: "Dr. Priya Sharma",
+                title: "Licensed Counselor",
+                avatar: "https://i.pravatar.cc/150?img=32",
+                rating: "⭐⭐⭐⭐⭐ 5.0 (156 reviews)",
+                experience: "💼 6 years experience",
+                languages: "🗣️ English, Hindi, Punjabi",
+                tags: ["Relationships", "Life Transitions", "Cultural Identity"],
+                bio: "I specialize in helping individuals navigate life's challenges with compassion and cultural sensitivity. Let's work together to build a life that feels authentic and fulfilling."
+            },
+            4: {
+                name: "Dr. James Wilson",
+                title: "Trauma Specialist",
+                avatar: "https://i.pravatar.cc/150?img=27",
+                rating: "⭐⭐⭐⭐⭐ 4.9 (84 reviews)",
+                experience: "💼 15 years experience",
+                languages: "🗣️ English",
+                tags: ["PTSD", "EMDR", "Complex Trauma"],
+                bio: "With extensive training in trauma-focused therapies, I help individuals process difficult experiences and reclaim their lives. Healing is possible, and I'm here to guide you."
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id') || '1';
+            const specialist = specialistsData[id] || specialistsData[1];
+
+            document.getElementById('profileName').textContent = specialist.name;
+            document.getElementById('profileTitle').textContent = specialist.title;
+            document.getElementById('profileAvatar').src = specialist.avatar;
+            document.getElementById('profileAvatar').alt = specialist.name;
+            document.getElementById('profileRating').textContent = specialist.rating;
+            document.getElementById('profileExperience').textContent = specialist.experience;
+            document.getElementById('profileLanguages').textContent = specialist.languages;
+            document.getElementById('profileBio').textContent = specialist.bio;
+
+            const tags = document.getElementById('profileTags');
+            tags.innerHTML = specialist.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
+        });
+
+        function bookSession() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id') || '1';
+            const sessionType = document.getElementById('sessionType').value;
+            const bookingDate = document.getElementById('bookingDate').value;
+            const selectedTime = document.querySelector('.time-chip.active')?.textContent || '';
+            const notes = document.getElementById('bookingNotes').value.trim();
+
+            const bookingParams = new URLSearchParams();
+            bookingParams.set('id', id);
+            bookingParams.set('type', sessionType);
+            if (bookingDate) bookingParams.set('date', bookingDate);
+            if (selectedTime) bookingParams.set('time', selectedTime);
+            if (notes) bookingParams.set('notes', notes);
+
+            window.location.href = `booking.html?${bookingParams.toString()}`;
+        }
+    </script>
+</body>
+</html>

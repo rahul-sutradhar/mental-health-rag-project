@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mental Health Chat – Serenity Mindspace</title>
+    <meta name="description" content="Chat with our compassionate AI wellness companion 24/7. First 10 messages free.">
+    <meta name="theme-color" content="#7A9B76">
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            padding-top: 80px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        @media(max-width:768px){ 
+            body { padding-top: 70px; } 
+        }
+
+        /* ============================================
+           CHAT LAYOUT & SIDEBAR STYLES (ChatGPT Style)
+           ============================================ */
+        .chat-layout {
+            display: flex;
+            flex-grow: 1;
+            height: 0;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chat-sidebar {
+            width: 280px;
+            background: var(--bg-elevated);
+            border-right: 1px solid var(--color-sand);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            padding: var(--space-md);
+            box-sizing: border-box;
+            transition: transform 0.3s ease;
+        }
+
+        .new-chat-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-xs);
+            width: 100%;
+            padding: var(--space-md);
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: var(--text-base);
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+            margin-bottom: var(--space-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .new-chat-btn:hover {
+            background: var(--color-primary-dark);
+        }
+
+        .new-chat-btn:active {
+            transform: scale(0.98);
+        }
+
+        .threads-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: var(--space-2xs);
+        }
+
+        /* Thread items styling - cleaner, standard sidebar items */
+        .thread-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            position: relative;
+            background: transparent;
+            border: 1px solid transparent;
+        }
+
+        .thread-item:hover {
+            background: rgba(122, 155, 118, 0.08);
+            color: var(--text-primary);
+            border-color: rgba(122, 155, 118, 0.15);
+        }
+
+        .thread-item.active {
+            background: rgba(122, 155, 118, 0.15);
+            border-color: rgba(122, 155, 118, 0.3);
+            color: var(--color-primary-dark);
+            font-weight: 600;
+        }
+
+        .thread-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .thread-icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .thread-title-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .thread-delete-btn {
+            background: transparent;
+            border: none;
+            color: var(--color-error);
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+            font-size: 0.9rem;
+            padding: 4px var(--space-xs);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .thread-item:hover .thread-delete-btn {
+            opacity: 0.7;
+        }
+
+        .thread-delete-btn:hover {
+            opacity: 1 !important;
+            background: rgba(229, 107, 111, 0.12);
+            transform: scale(1.05);
+        }
+
+        /* Sidebar toggle buttons for mobile view */
+        .toggle-sidebar-btn {
+            display: none;
+            padding: var(--space-sm);
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 99;
+        }
+
+        /* Override components.css .chat-container to fit split layout */
+        .chat-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: var(--bg-secondary);
+        }
+
+        /* ============================================
+           CHAT HEADER UPGRADES
+           ============================================ */
+        .chat-header {
+            background: var(--bg-elevated);
+            padding: var(--space-sm) var(--space-xl);
+            border-bottom: 1px solid var(--color-sand);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--color-sand);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: rgba(122, 155, 118, 0.1);
+            color: var(--color-primary-dark);
+            border-color: rgba(122, 155, 118, 0.3);
+            transform: translateX(-2px);
+        }
+
+        .chat-avatar {
+            box-shadow: 0 4px 10px rgba(122, 155, 118, 0.15);
+        }
+
+        /* ============================================
+           WELCOME STATE / LANDING PAGE DESIGN
+           ============================================ */
+        .chat-welcome-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            max-width: 680px;
+            margin: auto;
+            text-align: center;
+            padding: var(--space-xl) var(--space-md);
+            animation: fadeIn 0.4s ease-out;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .welcome-logo {
+            font-size: 3.5rem;
+            margin-bottom: var(--space-md);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .chat-welcome-area h2 {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            margin: 0 0 var(--space-xs) 0;
+            font-weight: 700;
+        }
+
+        .welcome-sub {
+            color: var(--text-secondary);
+            font-size: var(--text-base);
+            margin: 0 0 var(--space-xl) 0;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+
+        .welcome-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-md);
+            width: 100%;
+        }
+
+        @media (max-width: 600px) {
+            .welcome-cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .welcome-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--color-sand);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-md);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .welcome-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--color-primary-light);
+            background: rgba(122, 155, 118, 0.04);
+            box-shadow: 0 8px 24px rgba(122, 155, 118, 0.1);
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+            padding: var(--space-xs);
+            background: rgba(122, 155, 118, 0.1);
+            border-radius: var(--radius-md);
+            flex-shrink: 0;
+        }
+
+        .card-text h4 {
+            font-family: var(--font-display);
+            font-size: var(--text-base);
+            margin: 0 0 var(--space-2xs) 0;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .card-text p {
+            margin: 0;
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* ============================================
+           INPUT CONTAINER & SEND BUTTON UPGRADES
+           ============================================ */
+        .chat-input-container {
+            background: transparent;
+            padding: var(--space-sm) var(--space-xl) var(--space-md);
+            border-top: none;
+            box-shadow: none;
+        }
+
+        .chat-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            background: var(--bg-elevated);
+            border: 2px solid var(--color-sand);
+            border-radius: var(--radius-xl);
+            padding: 10px 14px;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .chat-input-wrapper:focus-within {
+            border-color: var(--color-primary);
+            box-shadow: 0 8px 30px rgba(122, 155, 118, 0.12), 0 0 0 4px rgba(122, 155, 118, 0.08);
+        }
+
+        .chat-input {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            padding: 6px 48px 6px 6px;
+            font-family: var(--font-body);
+            font-size: var(--text-base);
+            resize: none;
+            max-height: 120px;
+            outline: none;
+            color: var(--text-primary);
+            box-shadow: none !important;
+            line-height: 1.5;
+        }
+
+        .chat-send-btn {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 2px 8px rgba(122, 155, 118, 0.3);
+        }
+
+        .chat-send-btn:hover {
+            background: var(--color-primary-dark);
+            transform: scale(1.05);
+        }
+
+        .chat-send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .disclaimer-tag {
+            text-align: center;
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+            margin-top: 6px;
+            opacity: 0.8;
+        }
+
+        /* Sidebar Footer styling */
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: var(--space-md);
+            border-top: 1px solid var(--color-sand);
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 768px) {
+            .sidebar-overlay {
+                top: 70px;
+            }
+            .chat-sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                height: 100%;
+                z-index: 100;
+                transform: translateX(-100%);
+                box-shadow: var(--shadow-lg);
+            }
+            .chat-sidebar.active {
+                transform: translateX(0);
+            }
+            .toggle-sidebar-btn {
+                display: flex !important;
+            }
+            .sidebar-overlay.active {
+                display: block;
+            }
+            .chat-messages {
+                padding-top: 70px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="specialists.html" class="nav-link">Specialists</a></li>
+                <li><a href="store.html" class="nav-link">Pricing</a></li>
+                <li><a href="ai-chat.html" class="nav-link active">AI Chat</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <!-- Tokens counter in main navbar -->
+                <div class="token-display" id="headerTokens" style="margin-right: var(--space-xs);">
+                    <svg class="token-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+                    </svg>
+                    <span id="chatTokenCount" data-token-display>100</span>
+                </div>
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span data-dark-icon>🌙</span></button>
+                <a href="login.html" class="btn btn-outline" id="navLoginBtn">Login</a>
+                <a href="login.html?signup=true" class="btn btn-primary" id="navSignupBtn">Sign Up</a>
+                <a href="dashboard.html" class="btn btn-outline" id="navDashBtn" style="display:none">Dashboard</a>
+                <button class="btn btn-ghost" data-action="logout" id="navLogoutBtn" style="display:none">Logout</button>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="chat-layout">
+        <!-- Sidebar overlay for mobile views -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
+
+        <!-- ChatGPT-style Threads Sidebar -->
+        <div class="chat-sidebar" id="chatSidebar">
+            <div style="display: flex; gap: var(--space-sm); align-items: center; margin-bottom: var(--space-md); width: 100%;">
+                <a href="choose-support.html" class="back-btn" title="Go Back">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </a>
+                <button class="new-chat-btn" onclick="startNewDraftChat()" style="margin-bottom: 0; flex-grow: 1;">
+                    <span>+</span> New Chat
+                </button>
+            </div>
+            
+            <div class="threads-list" id="threadsList">
+                <!-- Chat threads rendered dynamically here -->
+            </div>
+            
+            <!-- Sidebar Footer Info & Option Actions -->
+            <div class="sidebar-footer">
+                <div style="display: flex; flex-direction: column; gap: var(--space-xs); margin-bottom: var(--space-md);">
+                    <button class="btn btn-sm btn-outline" style="width: 100%; font-size: 0.75rem; padding: 6px;" onclick="exportChat()">📄 Export Chat</button>
+                    <button class="btn btn-sm btn-outline" style="width: 100%; font-size: 0.75rem; padding: 6px; color: var(--color-error); border-color: rgba(229,107,111,0.2);" onclick="clearActiveThread()">🗑️ Delete Active Chat</button>
+                </div>
+                <div>Not a substitute for emergency care</div>
+                <div style="margin-top: 4px; display: flex; gap: var(--space-sm); justify-content: center; flex-wrap: wrap;">
+                    <a href="privacy.html" style="color: var(--color-primary);">Privacy</a>
+                    <span>|</span>
+                    <a href="tel:9152987821" style="color: var(--color-error); text-decoration: none;">iCall</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Container Panel -->
+        <div class="chat-container" style="position: relative;">
+            <!-- Floating Mobile Sidebar Toggle -->
+            <button class="btn toggle-sidebar-btn" onclick="toggleSidebar(true)" style="position: absolute; left: 16px; top: 16px; z-index: 50; border: 1px solid var(--color-sand); background: var(--bg-elevated); box-shadow: var(--shadow-sm); border-radius: 50%; width: 40px; height: 40px; display: none; align-items: center; justify-content: center; cursor: pointer;">
+                💬
+            </button>
+
+            <!-- Chat Messages viewport -->
+            <div class="chat-messages" id="chatMessages">
+                
+                <!-- Blank Slate Landing Page (displays when message list is empty) -->
+                <div id="chatWelcomeArea" class="chat-welcome-area">
+                    <div class="welcome-logo">🤖</div>
+                    <h2>How are you feeling right now?</h2>
+                    <p class="welcome-sub">I'm MindMate, your AI wellness companion. I can listen, share coping tips, or guide you through breathing. Select a topic below to begin:</p>
+                    
+                    <div class="welcome-cards-grid">
+                        <div class="welcome-card" onclick="sendQuickMessage('I\'m feeling overwhelmed with exam pressure')">
+                            <div class="card-icon">📚</div>
+                            <div class="card-text">
+                                <h4>Manage Exam Stress</h4>
+                                <p>Get helpful coping strategies for academic pressure</p>
+                            </div>
+                        </div>
+                        <div class="welcome-card" onclick="sendQuickMessage('Can you guide me through a breathing exercise?')">
+                            <div class="card-icon">💨</div>
+                            <div class="card-text">
+                                <h4>Breathing Exercise</h4>
+                                <p>Activate calming responses with box-breathing</p>
+                            </div>
+                        </div>
+                        <div class="welcome-card" onclick="sendQuickMessage('I feel lonely and isolated lately')">
+                            <div class="card-icon">👥</div>
+                            <div class="card-text">
+                                <h4>Feeling Lonely</h4>
+                                <p>Talk through feelings of isolation or sadness</p>
+                            </div>
+                        </div>
+                        <div class="welcome-card" onclick="sendQuickMessage('Recommend a movie, song, or joke from your RAG database')">
+                            <div class="card-icon">🎵</div>
+                            <div class="card-text">
+                                <h4>Lift My Mood</h4>
+                                <p>Fetch mood lifters, songs, or jokes from resources</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages container -->
+                <div id="messagesList" style="display: flex; flex-direction: column; gap: var(--space-lg); width: 100%;"></div>
+            </div>
+
+            <!-- Input bar panel -->
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <textarea
+                        id="messageInput"
+                        class="chat-input"
+                        placeholder="Type your message to MindMate..."
+                        rows="1"
+                        onkeydown="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"
+                    ></textarea>
+                    <button class="chat-send-btn" onclick="sendMessage()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+                <div class="disclaimer-tag">
+                    MindMate is a support companion, not a replacement for professional therapy. If in crisis, click specialists.
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Low Token Warnings Modal -->
+    <div class="modal-overlay" id="tokenWarning" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-icon">⚠️</div>
+                <h3 class="modal-title">Low on Tokens</h3>
+                <p class="modal-subtitle">You have less than 20 tokens remaining</p>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); text-align: center;">
+                    Purchase more tokens to continue chatting with the AI assistant, or switch to a specialist.
+                </p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="document.getElementById('tokenWarning').style.display='none'">Continue</button>
+                <a href="store.html" class="btn btn-primary">Buy Tokens</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let activeThreadId = null;
+        let threadsList = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateTokenDisplay();
+            checkTokenWarning();
+            
+            // Fetch threads list on load
+            fetchThreads();
+
+            // Auto-resize textbox
+            const ta = document.getElementById('messageInput');
+            ta.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+        });
+
+        function updateTokenDisplay() {
+            const el = document.getElementById('chatTokenCount');
+            if (el && typeof getTokens === 'function') el.textContent = getTokens();
+        }
+
+        function checkTokenWarning() {
+            if (typeof getTokens === 'function' && getTokens() < 20) {
+                const w = document.getElementById('tokenWarning');
+                if (w) w.style.display = 'flex';
+            }
+        }
+
+        // ==============================================================================
+        // 💬 MULTI-THREAD MANAGEMENT SCRIPTS
+        // ==============================================================================
+
+        function toggleSidebar(show) {
+            const sidebar = document.getElementById('chatSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (show) {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+            } else {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        }
+
+        async function fetchThreads() {
+            try {
+                const response = await fetch(API_BASE + '/api/chat/threads', {
+                    headers: {
+                        'X-User-Id': localStorage.getItem('user_id')
+                    }
+                });
+                if (!response.ok) throw new Error("Failed to load threads");
+                
+                threadsList = await response.json();
+                renderThreadsSidebar();
+
+                // On load, always show a new blank screen (Draft) to the user as requested,
+                // but if activeThreadId is already set (e.g. after sending a message), keep selecting it.
+                if (activeThreadId && threadsList.some(t => t.id === activeThreadId)) {
+                    selectThread(activeThreadId);
+                } else {
+                    startNewDraftChat();
+                }
+            } catch (err) {
+                console.error("Error fetching threads:", err);
+                if (typeof showToast === 'function') showToast("Could not load chat threads.", "error");
+                startNewDraftChat();
+            }
+        }
+
+        function renderThreadsSidebar() {
+            const container = document.getElementById('threadsList');
+            container.innerHTML = '';
+
+            threadsList.forEach(t => {
+                const div = document.createElement('div');
+                div.className = `thread-item ${t.id === activeThreadId ? 'active' : ''}`;
+                div.onclick = () => selectThread(t.id);
+
+                div.innerHTML = `
+                    <div class="thread-info">
+                        <span class="thread-icon">💬</span>
+                        <span class="thread-title-text" id="titleText-${t.id}">${escapeHtml(t.title)}</span>
+                    </div>
+                    <button class="thread-delete-btn" onclick="deleteThread(${t.id}, event)" title="Delete Chat">🗑️</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function startNewDraftChat() {
+            activeThreadId = null;
+            
+            // Remove active highlight from sidebar items
+            const activeItem = document.querySelector('.thread-item.active');
+            if (activeItem) activeItem.classList.remove('active');
+            
+            // Reset messages and show welcome area
+            document.getElementById('messagesList').innerHTML = '';
+            document.getElementById('chatWelcomeArea').style.display = 'flex';
+            
+            toggleSidebar(false);
+        }
+
+        async function selectThread(threadId) {
+            activeThreadId = threadId;
+            renderThreadsSidebar();
+            toggleSidebar(false);
+
+            const mList = document.getElementById('messagesList');
+            const welcomeArea = document.getElementById('chatWelcomeArea');
+            const chatMessagesViewport = document.getElementById('chatMessages');
+            
+            mList.innerHTML = '<div style="text-align:center; padding: var(--space-md); opacity:0.6;">Loading history...</div>';
+            welcomeArea.style.display = 'none';
+
+            try {
+                const response = await fetch(API_BASE + `/api/chat/history/${threadId}`, {
+                    headers: {
+                        'X-User-Id': localStorage.getItem('user_id')
+                    }
+                });
+                if (!response.ok) throw new Error("Failed to load history");
+
+                const history = await response.json();
+                mList.innerHTML = '';
+
+                if (history.length === 0) {
+                    welcomeArea.style.display = 'flex';
+                } else {
+                    welcomeArea.style.display = 'none';
+                    history.forEach(m => {
+                        renderMessage(m.message, m.sender === 'user' ? 'user' : 'assistant', m.timestamp, m.emotion, m.risk, m.confidence);
+                    });
+                }
+                chatMessagesViewport.scrollTop = chatMessagesViewport.scrollHeight;
+            } catch (err) {
+                console.error("Error loading thread history:", err);
+                mList.innerHTML = '<div style="text-align:center; color: var(--color-error); padding: var(--space-md);">Failed to load chat history.</div>';
+            }
+        }
+
+        async function deleteThread(threadId, event) {
+            // Prevent selectThread from firing
+            event.stopPropagation();
+
+            const doDelete = async () => {
+                try {
+                    const response = await fetch(API_BASE + `/api/chat/threads/${threadId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-User-Id': localStorage.getItem('user_id')
+                    }
+                });
+                    if (!response.ok) throw new Error("Deletion failed");
+
+                    threadsList = threadsList.filter(t => t.id !== threadId);
+                    
+                    // If the active thread was deleted, select another one or create new
+                    if (activeThreadId === threadId) {
+                        if (threadsList.length > 0) {
+                            activeThreadId = threadsList[0].id;
+                            selectThread(activeThreadId);
+                        } else {
+                            activeThreadId = null;
+                            startNewDraftChat();
+                        }
+                    } else {
+                        renderThreadsSidebar();
+                    }
+                    if (typeof showToast === 'function') showToast("Chat thread deleted.", "info");
+                } catch (err) {
+                    console.error("Error deleting thread:", err);
+                    if (typeof showToast === 'function') showToast("Could not delete thread.", "error");
+                }
+            };
+
+            if (typeof showConfirmModal === 'function') {
+                showConfirmModal('Delete this chat thread permanently?', 'Delete Chat', doDelete);
+            } else {
+                if (confirm('Delete this chat thread permanently?')) doDelete();
+            }
+        }
+
+        async function clearActiveThread() {
+            if (activeThreadId) {
+                // Call standard delete thread logic for the active thread
+                const fakeEvent = { stopPropagation: () => {} };
+                deleteThread(activeThreadId, fakeEvent);
+            }
+        }
+
+        // ==============================================================================
+        // ✉️ CHAT TRANSMISSION SCRIPTS
+        // ==============================================================================
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // Trigger local crisis keyword warnings if appropriate
+            if (typeof detectCrisisKeywords === 'function' && detectCrisisKeywords(text)) {
+                if (typeof showCrisisResources === 'function') showCrisisResources();
+            }
+
+            // Deduct local tokens if local simulation is running
+            if (typeof getTokens === 'function' && typeof deductTokens === 'function') {
+                const count = typeof incrementMessageCount === 'function' ? incrementMessageCount() : 11;
+                if (count > 10) {
+                    if (!deductTokens(5)) {
+                        if (typeof showToast === 'function') showToast('Not enough tokens! Please top up to continue.', 'error');
+                        return;
+                    }
+                    updateTokenDisplay();
+                    checkTokenWarning();
+                }
+            }
+
+            // 1. LAZY THREAD CREATION: Create thread in DB on-demand if activeThreadId is null
+            if (!activeThreadId) {
+                try {
+                    const response = await fetch(API_BASE + '/api/chat/threads', {
+                    method: 'POST',
+                    headers: {
+                        'X-User-Id': localStorage.getItem('user_id')
+                    }
+                });
+                    if (!response.ok) throw new Error("Database thread creation failed");
+                    const newThread = await response.json();
+                    activeThreadId = newThread.id;
+                    threadsList.unshift(newThread);
+                    renderThreadsSidebar();
+                } catch (err) {
+                    console.error("Error creating thread on first message:", err);
+                    if (typeof showToast === 'function') showToast("Could not start chat session.", "error");
+                    return;
+                }
+            }
+
+            // Hide welcome landing cards if visible before rendering user text
+            const welcomeArea = document.getElementById('chatWelcomeArea');
+            if (welcomeArea.style.display !== 'none') {
+                welcomeArea.style.display = 'none';
+            }
+
+            const ts = new Date().toISOString();
+            renderMessage(text, 'user', ts);
+            input.value = '';
+            input.style.height = 'auto';
+
+            showTyping();
+
+            try {
+                const reply = await callChatAPI(text, activeThreadId);
+                hideTyping();
+                const replyTs = new Date().toISOString();
+                
+                renderMessage(reply.text, 'assistant', replyTs, reply.emotion, reply.risk, reply.confidence);
+                
+                // If thread ID was created on server side
+                if (reply.thread_id && reply.thread_id !== activeThreadId) {
+                    activeThreadId = reply.thread_id;
+                    fetchThreads();
+                } else if (reply.thread_title) {
+                    // Update thread title in sidebar UI if renamed dynamically
+                    const titleEl = document.getElementById(`titleText-${activeThreadId}`);
+                    if (titleEl) titleEl.textContent = reply.thread_title;
+                    // Update internal array
+                    const tIdx = threadsList.findIndex(t => t.id === activeThreadId);
+                    if (tIdx > -1) threadsList[tIdx].title = reply.thread_title;
+                }
+            } catch (err) {
+                hideTyping();
+                console.error('Chat API error:', err);
+                const fallback = getFallbackResponse(text);
+                const replyTs = new Date().toISOString();
+                renderMessage(fallback, 'assistant', replyTs);
+            }
+        }
+
+        async function callChatAPI(userMessage, threadId) {
+            const response = await fetch(API_BASE + '/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-Id': localStorage.getItem('user_id')
+                },
+                body: JSON.stringify({ 
+                    message: userMessage,
+                    thread_id: threadId
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Chat request failed');
+            }
+
+            return {
+                text: data.response || "I'm here with you. Tell me more.",
+                emotion: data.emotion || null,
+                risk: data.risk || null,
+                confidence: data.confidence || null,
+                thread_id: data.thread_id || null,
+                thread_title: data.thread_title || null
+            };
+        }
+
+        function getFallbackResponse(msg) {
+            const m = msg.toLowerCase();
+            if (m.includes('overwhelm') || m.includes('stress'))
+                return "I hear that you're feeling overwhelmed — that's completely valid. Try the 5-4-3-2-1 grounding technique: name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste. It gently brings your mind back to the present. Would you like to talk more about what's weighing on you?";
+            if (m.includes('anxi'))
+                return "Anxiety can feel really heavy. One thing that helps is box breathing — breathe in for 4 counts, hold for 4, breathe out for 4, hold for 4. Repeat a few times. I'm here with you. Would you like to talk through what's making you anxious?";
+            if (m.includes('sad') || m.includes('depress'))
+                return "I'm sorry you're going through this. Sadness is a real and valid feeling, and reaching out the way you just did takes courage. You're not alone. Would you like to share more about what's been happening?";
+            if (m.includes('breath'))
+                return "Let's breathe together. Inhale slowly through your nose for 4 counts... hold for 4... exhale through your mouth for 6 counts. Repeat 3-5 times. This activates your body's natural calming response. How do you feel after trying that?";
+            return "Thank you for sharing that with me. Your feelings are completely valid, and I'm here to support you. Would you like to tell me more about what's been on your mind?";
+        }
+
+        function renderMessage(text, sender, timestamp, emotion = null, risk = null, confidence = null) {
+            const mList = document.getElementById('messagesList');
+            const viewport = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'message ' + (sender === 'user' ? 'user' : '');
+            const time = new Date(timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            let extraHTML = '';
+            if (sender !== 'user' && emotion) {
+                let riskColor = "var(--color-primary-dark)";
+                if (risk === "HIGH" || risk === "CRITICAL") riskColor = "var(--color-error)";
+                else if (risk === "MODERATE" || risk === "LOW") riskColor = "var(--color-accent-dark, #b8860b)";
+
+                extraHTML = `
+                    <div style="font-size: 0.75rem; opacity: 0.75; margin-top: 6px; border-top: 1px dashed rgba(0,0,0,0.1); padding-top:4px; color:${riskColor}; font-weight:600;">
+                        Detected: ${emotion.toUpperCase()} | Risk: ${risk} (${confidence || 'N/A'})
+                    </div>
+                `;
+            }
+
+            if (sender === 'user') {
+                div.innerHTML = `
+                    <div class="message-avatar" style="background:var(--color-primary);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">You</div>
+                    <div class="message-content">
+                        <div class="message-text">${escapeHtml(text)}</div>
+                        <div class="message-time">${time}</div>
+                    </div>`;
+            } else {
+                div.innerHTML = `
+                    <div class="message-avatar" style="background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🤖</div>
+                    <div class="message-content">
+                        <div class="message-text">${escapeHtml(text).replace(/\n/g, '<br>')}</div>
+                        ${extraHTML}
+                        <div class="message-time">${time}</div>
+                    </div>`;
+            }
+
+            mList.appendChild(div);
+            viewport.scrollTop = viewport.scrollHeight;
+        }
+
+        function showTyping() {
+            const mList = document.getElementById('messagesList');
+            const viewport = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.id = 'typingIndicator';
+            div.className = 'message';
+            div.innerHTML = `
+                <div class="message-avatar" style="background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🤖</div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>`;
+            mList.appendChild(div);
+            viewport.scrollTop = viewport.scrollHeight;
+        }
+
+        function hideTyping() {
+            const t = document.getElementById('typingIndicator');
+            if (t) t.remove();
+        }
+
+        function sendQuickMessage(text) {
+            document.getElementById('messageInput').value = text;
+            sendMessage();
+        }
+
+        // Hide overlay menu
+        function toggleMenu() {
+            const menu = document.getElementById('optionsMenu');
+            menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        function exportChat() {
+            const msgs = document.querySelectorAll('.message');
+            let transcript = '=== Serenity Mindspace - AI Chat Transcript ===\nDate: ' + new Date().toLocaleDateString() + '\n' + '─'.repeat(50) + '\n\n';
+            msgs.forEach(m => {
+                const sender = m.classList.contains('user') ? 'You' : 'MindMate AI';
+                const textEl = m.querySelector('.message-text');
+                const timeEl = m.querySelector('.message-time');
+                if (textEl && timeEl) transcript += '[' + timeEl.textContent + '] ' + sender + ': ' + textEl.textContent.replace(/<br>/g, '\n') + '\n\n';
+            });
+            const blob = new Blob([transcript], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'serenity-chat-' + Date.now() + '.txt';
+            a.click();
+            if (typeof showToast === 'function') showToast('Transcript exported!', 'success');
+        }
+
+        function escapeHtml(string) {
+            const matchHtmlRegExp = /["'&<>]/;
+            const str = '' + string;
+            const match = matchHtmlRegExp.exec(str);
+            if (!match) return str;
+
+            let escape;
+            let html = '';
+            let index = 0;
+            let lastIndex = 0;
+
+            for (index = match.index; index < str.length; index++) {
+                switch (str.charCodeAt(index)) {
+                    case 34: // "
+                        escape = '&quot;';
+                        break;
+                    case 38: // &
+                        escape = '&amp;';
+                        break;
+                    case 39: // '
+                        escape = '&#39;';
+                        break;
+                    case 60: // <
+                        escape = '&lt;';
+                        break;
+                    case 62: // >
+                        escape = '&gt;';
+                        break;
+                    default:
+                        continue;
+                }
+
+                if (lastIndex !== index) {
+                    html += str.substring(lastIndex, index);
+                }
+
+                if (lastIndex !== index) {
+                    html += str.substring(lastIndex, index);
+                }
+
+                lastIndex = index + 1;
+                html += escape;
+            }
+
+            return lastIndex !== index
+                ? html + str.substring(lastIndex, index)
+                : html;
+        }
+    </script>
+
+</body>
+</html>

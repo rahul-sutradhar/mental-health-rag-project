@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="About Serenity Mindspace — our mission, values, and the team behind India's compassionate mental wellness platform.">
+    <meta property="og:title" content="About Us — Serenity Mindspace">
+    <meta property="og:description"
+        content="Learn about Serenity Mindspace, our mission to make mental health support accessible, compassionate, and professional for everyone.">
+    <meta name="theme-color" content="#7A9B76">
+    <title>About Us — Serenity Mindspace</title>
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        .about-hero {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            color: white;
+            padding: 120px 0 80px;
+            text-align: center;
+        }
+
+        .about-hero h1 {
+            color: white;
+            font-size: var(--text-5xl);
+            margin-bottom: var(--space-lg);
+        }
+
+        .about-hero p {
+            font-size: var(--text-xl);
+            opacity: 0.9;
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .value-card {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-lg);
+            padding: var(--space-2xl);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: transform var(--transition-base);
+        }
+
+        .value-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .value-icon {
+            font-size: 3rem;
+            margin-bottom: var(--space-md);
+        }
+
+        .team-card {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .team-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space-md);
+            font-size: 2rem;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: var(--space-2xl);
+        }
+
+        .stat-number {
+            font-family: var(--font-display);
+            font-size: var(--text-5xl);
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .mission-section {
+            background: linear-gradient(180deg, transparent 0%, rgba(164, 196, 160, 0.06) 50%, transparent 100%);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z" />
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link active">About</a></li>
+                <li><a href="specialists.html" class="nav-link">Specialists</a></li>
+                <li><a href="store.html" class="nav-link">Pricing</a></li>
+                <li><a href="faq.html" class="nav-link">FAQ</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span
+                        data-dark-icon>🌙</span></button>
+                <a href="login.html" class="btn btn-outline" id="navLoginBtn">Login</a>
+                <a href="login.html?signup=true" class="btn btn-primary" id="navSignupBtn">Sign Up</a>
+                <a href="dashboard.html" class="btn btn-outline" id="navDashBtn"
+                    style="display:none">Dashboard</a>
+                <button class="btn btn-ghost" data-action="logout" id="navLogoutBtn"
+                    style="display:none">Logout</button>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <section class="about-hero">
+        <div class="container">
+            <p
+                style="font-size:var(--text-sm);opacity:0.75;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:var(--space-md);">
+                Our Story</p>
+            <h1>Mental Wellness for <em style="font-style:italic;opacity:0.85;">Everyone</em></h1>
+            <p>We believe that access to compassionate mental health support should never be a privilege. Serenity
+                Mindspace was founded to remove every barrier between a person in pain and the help they need.</p>
+        </div>
+    </section>
+
+    <section class="section mission-section">
+        <div class="container">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4xl);align-items:center;">
+                <div>
+                    <p class="badge badge-primary" style="display:inline-block;margin-bottom:var(--space-md);">Our
+                        Mission</p>
+                    <h2>Making mental health care as accessible as a phone call</h2>
+                    <p class="text-secondary" style="margin-top:var(--space-lg);font-size:var(--text-lg);">In a world
+                        where 1 in 5 people experience a mental health challenge each year, most never receive the
+                        support they need. We're changing that — one conversation at a time.</p>
+                    <p class="text-secondary" style="margin-top:var(--space-md);">Whether you need to vent, learn coping
+                        strategies, or work with a licensed professional, Serenity Mindspace meets you exactly where you
+                        are — with warmth, privacy, and zero judgement.</p>
+                </div>
+                <div
+                    style="background:linear-gradient(135deg,var(--color-primary-light),var(--color-accent-light));border-radius:var(--radius-xl);padding:var(--space-3xl);text-align:center;">
+                    <div style="font-size:5rem;margin-bottom:var(--space-lg);">🌿</div>
+                    <h3 style="color:var(--color-primary-dark);">"Healing begins with a single conversation."</h3>
+                    <p
+                        style="color:var(--color-primary-dark);opacity:0.7;margin-top:var(--space-md);font-size:var(--text-sm);">
+                        — Serenity Mindspace, founded 2026</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" style="background:var(--bg-elevated);">
+        <div class="container">
+            <div class="grid grid-4">
+                <div class="stat-box">
+                    <div class="stat-number">10K+</div>
+                    <p class="text-secondary">Users Supported</p>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">200+</div>
+                    <p class="text-secondary">Verified Specialists</p>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">50K+</div>
+                    <p class="text-secondary">Sessions Completed</p>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">4.9★</div>
+                    <p class="text-secondary">Average Rating</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="text-center" style="max-width:680px;margin:0 auto var(--space-3xl);">
+                <h2>What We Stand For</h2>
+                <p class="text-secondary">Every decision we make is guided by these core values.</p>
+            </div>
+            <div class="grid grid-3" style="gap:var(--space-xl);">
+                <div class="value-card">
+                    <div class="value-icon">🤝</div>
+                    <h3>Compassion First</h3>
+                    <p class="text-secondary">Every interaction — human or AI — is designed with empathy at its core. We
+                        never rush you, judge you, or dismiss your feelings.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🔒</div>
+                    <h3>Privacy by Design</h3>
+                    <p class="text-secondary">Your conversations are yours. End-to-end encryption, no data selling, no
+                        advertising. Your mental health journey is private.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">✓</div>
+                    <h3>Verified Quality</h3>
+                    <p class="text-secondary">Every specialist on our platform has their credentials verified by our
+                        admin team before their first session.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🌍</div>
+                    <h3>Accessible to All</h3>
+                    <p class="text-secondary">Multiple languages, flexible pricing, and a token system designed to make
+                        quality care reachable for everyone.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🔬</div>
+                    <h3>Evidence-Based</h3>
+                    <p class="text-secondary">Our AI and specialist approaches are grounded in established therapeutic
+                        frameworks including CBT, DBT, and mindfulness.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🚨</div>
+                    <h3>Crisis Ready</h3>
+                    <p class="text-secondary">Crisis resources are always one tap away, with automated detection and
+                        immediate escalation built into every page.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" style="background:var(--bg-elevated);">
+        <div class="container">
+            <div class="text-center" style="max-width:600px;margin:0 auto var(--space-3xl);">
+                <h2>The Team Behind Serenity</h2>
+                <p class="text-secondary">Clinicians, engineers, and advocates united by one goal.</p>
+            </div>
+            <div class="grid grid-4" style="gap:var(--space-xl);">
+                <div class="team-card">
+                    <div class="team-avatar">👨‍💻</div>
+                    <h4>Shouvik Banik</h4>
+                    <p class="text-secondary" style="font-size:var(--text-sm);">23052918</p>
+                </div>
+                <div class="team-card">
+                    <div class="team-avatar">👨‍🎨</div>
+                    <h4>Gourab Kumar Singha</h4>
+                    <p class="text-secondary" style="font-size:var(--text-sm);">23053392</p>
+                </div>
+                <div class="team-card">
+                    <div class="team-avatar">👩‍⚕️</div>
+                    <h4>Tamanna Sani</h4>
+                    <p class="text-secondary" style="font-size:var(--text-sm);">2305985</p>
+                </div>
+                <div class="team-card">
+                    <div class="team-avatar">👨‍🎨</div>
+                    <h4>Aman Mishra</h4>
+                    <p class="text-secondary" style="font-size:var(--text-sm);">23053103</p>
+                </div>
+                <div class="team-card">
+                    <div class="team-avatar">👨</div>
+                    <h4>Kaustubh Pandey</h4>
+                    <p class="text-secondary" style="font-size:var(--text-sm);">23053131</p>
+                </div>
+                <div class="team-card">
+                    <div class="team-avatar">👩</div>
+                    <h4>Swechchha Yadav</h4>
+                    <p class="text-secondary" style="font-size:var(--text-sm);">2305983</p>
+                </div>
+                <div class="team-card">
+                    <div class="team-avatar">👨‍💻</div>
+                    <h4>Rahul Sutradhar</h4>
+                    <p class="text-secondary" style="font-size:var(--text-sm);">24057057</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section"
+        style="background:linear-gradient(135deg,var(--color-primary) 0%,var(--color-primary-dark) 100%);text-align:center;">
+        <div class="container container-narrow">
+            <h2 style="color:white;">Ready to begin?</h2>
+            <p style="color:white;opacity:0.9;font-size:var(--text-lg);margin:var(--space-lg) 0 var(--space-2xl);">Your
+                first 10 AI messages are free. No credit card required.</p>
+            <div style="display:flex;gap:var(--space-md);justify-content:center;flex-wrap:wrap;">
+                <a href="login.html?signup=true" class="btn btn-lg"
+                    style="background:white;color:var(--color-primary-dark);">Get Started Free</a>
+                <a href="specialists.html" class="btn btn-outline btn-lg"
+                    style="border-color:white;color:white;">Browse Specialists</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Serenity Mindspace</h4>
+                    <p style="color:rgba(255,255,255,0.7);font-size:var(--text-sm);">Your safe space for mental
+                        wellness.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <ul class="footer-links">
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="terms.html">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section crisis-resources">
+                    <h4>⚠️ Crisis</h4><a href="tel:9152987821" class="crisis-number">iCall — 9152987821</a><a
+                        href="tel:18602662345" class="crisis-number"
+                        style="font-size:var(--text-sm);margin-top:var(--space-xs);">Vandrevala — 1860-2662-345</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="footerYear"></span> Serenity Mindspace. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('footerYear').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>

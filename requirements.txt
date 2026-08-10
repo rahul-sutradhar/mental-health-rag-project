@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+jinja2
+python-multipart
+sqlalchemy
+psycopg2-binary
+httpx
+argon2-cffi
+numpy
+python-dotenv
+itsdangerous

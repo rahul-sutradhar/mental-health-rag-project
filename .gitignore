@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+
+# Environment Variables (CRITICAL: Do not commit API keys!)
+.env
+
+# Database
+*.db
+mindmate.db
+
+# Virtual Environment
+venv/
+env/
+.env/
+.venv/
+
+# Large files
+*.txt
+!requirements.txt
+*.h5
+*.pickle
+glove.6B/
+
+# IDE files
+.vscode/
+.idea/
+
+# Restructuring
+trash/

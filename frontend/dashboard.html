@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View your upcoming sessions, wellness stats, mood tracker, and token balance.">
+    <meta name="keywords" content="mental health, therapy, counselling, anxiety, depression, wellness, mindfulness, online therapy">
+    <meta name="author" content="Serenity Mindspace">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Your Dashboard – Serenity Mindspace">
+    <meta property="og:description" content="View your upcoming sessions, wellness stats, mood tracker, and token balance.">
+    <meta property="og:site_name" content="Serenity Mindspace">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Your Dashboard – Serenity Mindspace">
+    <meta name="twitter:description" content="View your upcoming sessions, wellness stats, mood tracker, and token balance.">
+    <meta name="theme-color" content="#7A9B76">
+    <title>Your Dashboard – Serenity Mindspace</title>
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        .dashboard-container {
+            padding-top: 100px;
+            padding-bottom: var(--space-4xl);
+            background: var(--bg-primary);
+            min-height: 100vh;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-xl);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            color: white;
+            padding: var(--space-2xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: var(--text-5xl);
+            font-weight: 700;
+            margin-bottom: var(--space-sm);
+        }
+
+        .stat-label {
+            font-size: var(--text-sm);
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-xl);
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-md);
+            margin-bottom: var(--space-3xl);
+        }
+
+        .action-card {
+            background: var(--bg-elevated);
+            padding: var(--space-xl);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all var(--transition-base);
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .action-card:hover {
+            border-color: var(--color-primary);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .action-icon {
+            font-size: 2.5rem;
+            margin-bottom: var(--space-md);
+        }
+
+        .session-item {
+            background: var(--bg-elevated);
+            padding: var(--space-lg);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mood-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: var(--space-sm);
+        }
+
+        .mood-day {
+            aspect-ratio: 1;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-xs);
+            background: var(--color-sand);
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+
+        .mood-day:hover {
+            transform: scale(1.1);
+        }
+
+        .mood-day.good {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .mood-day.fair {
+            background: var(--color-accent);
+            color: white;
+        }
+
+        .mood-day.poor {
+            background: var(--color-error);
+            color: white;
+        }
+
+        body {
+            padding-top: 80px;
+        }
+
+        @media(max-width:768px){
+            body{
+                padding-top:70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="ai-chat.html" class="nav-link">AI Chat</a></li>
+                <li><a href="specialists.html" class="nav-link">Specialists</a></li>
+                <li><a href="store.html" class="nav-link">Store</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span data-dark-icon>🌙</span></button>
+                <div class="token-display">
+                    <svg class="token-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+                    </svg>
+                    <span id="tokenCount" data-token-display>100</span> tokens
+                </div>
+                <button class="btn btn-outline" data-action="logout" id="navLogoutBtn">Logout</button>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="dashboard-container">
+        <div class="container">
+            <div style="margin-bottom: var(--space-3xl);">
+                <h1 style="font-size: var(--text-5xl); margin-bottom: var(--space-sm);">Welcome back, <span id="welcomeName">Friend</span>! 👋</h1>
+                <p style="font-size: var(--text-lg); color: var(--text-secondary);">
+                    Here's your mental wellness overview
+                </p>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Total Sessions</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);">
+                    <div class="stat-value">12 hrs</div>
+                    <div class="stat-label">Time in Therapy</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, var(--color-accent) 0%, #d4b456 100%);">
+                    <div class="stat-value">24</div>
+                    <div class="stat-label">Days Streak</div>
+                </div>
+            </div>
+
+            <div class="section-header">
+                <h2>Quick Actions</h2>
+            </div>
+            <div class="quick-actions">
+                <a href="ai-chat.html" class="action-card">
+                    <div class="action-icon">💬</div>
+                    <h4>Chat with AI</h4>
+                    <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;">Instant support</p>
+                </a>
+                <a href="specialists.html" class="action-card">
+                    <div class="action-icon">👨‍⚕️</div>
+                    <h4>Book Specialist</h4>
+                    <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;">Schedule session</p>
+                </a>
+                <a href="store.html" class="action-card">
+                    <div class="action-icon">💎</div>
+                    <h4>Buy Tokens</h4>
+                    <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;">Recharge balance</p>
+                </a>
+                <a href="#journal" class="action-card">
+                    <div class="action-icon">📝</div>
+                    <h4>Journal Entry</h4>
+                    <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;">Record thoughts</p>
+                </a>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-2xl); align-items: start;">
+                <div>
+                    <div class="section-header">
+                        <h3>Upcoming Sessions</h3>
+                        <a href="#" class="btn btn-sm btn-outline">View All</a>
+                    </div>
+                    <div class="card">
+                        <div id="upcomingSessionsList">
+                            <div class="session-item">
+                                <div>
+                                    <h4 style="margin-bottom: var(--space-xs);">Dr. Sarah Johnson</h4>
+                                    <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;">
+                                        📹 Video Session • Tomorrow at <span data-live-time="time"></span>
+                                    </p>
+                                </div>
+                                <button class="btn btn-primary">Join</button>
+                            </div>
+
+                            <div class="session-item" style="margin-bottom: 0;">
+                                <div>
+                                    <h4 style="margin-bottom: var(--space-xs);">Dr. Michael Chen</h4>
+                                    <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;">
+                                        💬 Chat Session • Friday at <span data-live-time="time"></span>
+                                    </p>
+                                </div>
+                                <button class="btn btn-outline">Reschedule</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-header" style="margin-top: var(--space-3xl);">
+                        <h3>Recent Activity</h3>
+                    </div>
+                    <div class="card">
+                        <div style="display: flex; gap: var(--space-md); padding: var(--space-md) 0; border-bottom: 1px solid var(--color-sand);">
+                            <div style="width: 40px; height: 40px; background: rgba(122, 155, 118, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                💬
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: var(--space-xs); font-size: var(--text-base);">Completed session with Dr. Sarah</h4>
+                                <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;">2 days ago</p>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: var(--space-md); padding: var(--space-md) 0; border-bottom: 1px solid var(--color-sand);">
+                            <div style="width: 40px; height: 40px; background: rgba(232, 196, 104, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                💎
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: var(--space-xs); font-size: var(--text-base);">Purchased 500 tokens</h4>
+                                <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;">5 days ago</p>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: var(--space-md); padding: var(--space-md) 0; margin-bottom: 0;">
+                            <div style="width: 40px; height: 40px; background: rgba(122, 155, 118, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                📊
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: var(--space-xs); font-size: var(--text-base);">Completed wellness assessment</h4>
+                                <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;">1 week ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="section-header">
+                        <h3>Mood This Month</h3>
+                    </div>
+                    <div class="card">
+                        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-xs); margin-bottom: var(--space-md); text-align: center; font-size: var(--text-xs); color: var(--text-tertiary);">
+                            <div>S</div>
+                            <div>M</div>
+                            <div>T</div>
+                            <div>W</div>
+                            <div>T</div>
+                            <div>F</div>
+                            <div>S</div>
+                        </div>
+                        <div class="mood-calendar">
+                            <div class="mood-day"></div>
+                            <div class="mood-day"></div>
+                            <div class="mood-day good">😊</div>
+                            <div class="mood-day good">😊</div>
+                            <div class="mood-day fair">😐</div>
+                            <div class="mood-day good">😊</div>
+                            <div class="mood-day good">😊</div>
+                            <div class="mood-day fair">😐</div>
+                            <div class="mood-day good">😊</div>
+                            <div class="mood-day good">😊</div>
+                            <div class="mood-day poor">😕</div>
+                            <div class="mood-day fair">😐</div>
+                            <div class="mood-day good">😊</div>
+                            <div class="mood-day good">😊</div>
+                            <div class="mood-day good">😊</div>
+                            <div class="mood-day good">😊</div>
+                            <div class="mood-day fair">😐</div>
+                            <div class="mood-day good">😊</div>
+                            <div class="mood-day good">😊</div>
+                            <div class="mood-day good">😊</div>
+                        </div>
+                        <div style="display: flex; gap: var(--space-md); margin-top: var(--space-lg); font-size: var(--text-xs);">
+                            <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                                <div style="width: 12px; height: 12px; background: var(--color-success); border-radius: 50%;"></div>
+                                <span>Good</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                                <div style="width: 12px; height: 12px; background: var(--color-accent); border-radius: 50%;"></div>
+                                <span>Fair</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                                <div style="width: 12px; height: 12px; background: var(--color-error); border-radius: 50%;"></div>
+                                <span>Poor</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-header" style="margin-top: var(--space-2xl);">
+                        <h3>My Specialists</h3>
+                    </div>
+                    <div class="card">
+                        <div style="display: flex; gap: var(--space-md); align-items: center; padding: var(--space-md) 0; border-bottom: 1px solid var(--color-sand);">
+                            <img src="https://i.pravatar.cc/150?img=47" alt="Dr. Sarah Johnson" style="width: 48px; height: 48px; border-radius: 50%;">
+                            <div style="flex-grow: 1;">
+                                <h4 style="margin-bottom: var(--space-xs); font-size: var(--text-base);">Dr. Sarah Johnson</h4>
+                                <p style="color: var(--text-secondary); font-size: var(--text-xs); margin: 0;">4 sessions</p>
+                            </div>
+                            <a href="booking.html?id=1" class="btn btn-sm btn-outline">Book</a>
+                        </div>
+
+                        <div style="display: flex; gap: var(--space-md); align-items: center; padding: var(--space-md) 0; margin-bottom: 0;">
+                            <img src="https://i.pravatar.cc/150?img=33" alt="Dr. Michael Chen" style="width: 48px; height: 48px; border-radius: 50%;">
+                            <div style="flex-grow: 1;">
+                                <h4 style="margin-bottom: var(--space-xs); font-size: var(--text-base);">Dr. Michael Chen</h4>
+                                <p style="color: var(--text-secondary); font-size: var(--text-xs); margin: 0;">2 sessions</p>
+                            </div>
+                            <a href="booking.html?id=2" class="btn btn-sm btn-outline">Book</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section"><h4>Serenity Mindspace</h4><p style="color:rgba(255,255,255,0.7);font-size:var(--text-sm);">Your safe space for mental wellness.</p></div>
+                <div class="footer-section"><h4>Platform</h4><ul class="footer-links"><li><a href="index.html">Home</a></li><li><a href="about.html">About Us</a></li><li><a href="specialists.html">Specialists</a></li><li><a href="store.html">Pricing</a></li><li><a href="ai-chat.html">AI Chat</a></li></ul></div>
+                <div class="footer-section"><h4>Support</h4><ul class="footer-links"><li><a href="faq.html">FAQ</a></li><li><a href="contact.html">Contact Us</a></li><li><a href="privacy.html">Privacy Policy</a></li><li><a href="terms.html">Terms of Service</a></li></ul></div>
+                <div class="footer-section crisis-resources"><h4>⚠️ Crisis Resources</h4><p style="color:rgba(255,255,255,0.9);font-size:var(--text-sm);margin-bottom:var(--space-sm);">If you are in crisis:</p><a href="tel:9152987821" class="crisis-number">iCall — 9152987821</a></div>
+            </div>
+            <div class="footer-bottom"><p>&copy; <span class="footer-year"></span> Serenity Mindspace. All rights reserved.</p></div>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const name = typeof getUserName === 'function' ? getUserName() : 'Friend';
+            const greet = document.getElementById('welcomeName');
+            if (greet) greet.textContent = name;
+
+            const tokenCount = document.getElementById('tokenCount');
+            if (tokenCount && typeof getTokens === 'function') {
+                tokenCount.textContent = getTokens();
+            }
+
+            loadUpcomingSessions();
+        });
+
+        function loadUpcomingSessions() {
+            const container = document.getElementById('upcomingSessionsList');
+            if (!container || typeof getUpcomingBookings !== 'function') return;
+
+            const upcoming = getUpcomingBookings();
+            if (!upcoming.length) return;
+
+            container.innerHTML = upcoming.slice(0, 3).map(b => `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--space-md);border:1px solid var(--color-sand);border-radius:var(--radius-md);margin-bottom:var(--space-md);">
+                    <div>
+                        <div style="font-weight:600;font-family:var(--font-display);">${b.specialist || 'Specialist Session'}</div>
+                        <div style="font-size:var(--text-sm);color:var(--text-secondary);">${b.type || 'Chat'} • ${b.date || 'Scheduled'} ${b.time || ''}</div>
+                    </div>
+                    <a href="chat-room.html" class="btn btn-sm btn-primary">Join</a>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

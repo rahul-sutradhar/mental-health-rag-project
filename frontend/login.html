@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Access your Serenity Mindspace account or create a new one. Licensed specialists and AI support ready for you.">
+    <meta name="keywords" content="mental health, therapy, counselling, anxiety, depression, wellness, mindfulness, online therapy">
+    <meta name="author" content="Serenity Mindspace">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Login or Sign Up – Serenity Mindspace">
+    <meta property="og:description" content="Access your Serenity Mindspace account or create a new one. Licensed specialists and AI support ready for you.">
+    <meta property="og:site_name" content="Serenity Mindspace">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Login or Sign Up – Serenity Mindspace">
+    <meta name="twitter:description" content="Access your Serenity Mindspace account or create a new one. Licensed specialists and AI support ready for you.">
+    <meta name="theme-color" content="#7A9B76">
+    <title>Login or Sign Up – Serenity Mindspace</title>
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-xl);
+            background: linear-gradient(135deg,
+                rgba(164, 196, 160, 0.1) 0%,
+                rgba(250, 247, 242, 1) 50%,
+                rgba(229, 181, 164, 0.1) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-shape {
+            position: absolute;
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            opacity: 0.1;
+            filter: blur(60px);
+        }
+
+        .auth-shape-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--color-primary);
+            top: -200px;
+            right: -100px;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .auth-shape-2 {
+            width: 400px;
+            height: 400px;
+            background: var(--color-secondary);
+            bottom: -100px;
+            left: -100px;
+            animation: float 10s ease-in-out infinite reverse;
+        }
+
+        .auth-box {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-xl);
+            padding: var(--space-3xl);
+            max-width: 500px;
+            width: 100%;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: var(--space-2xl);
+        }
+
+        .auth-logo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto var(--space-md);
+            fill: var(--color-primary);
+        }
+
+        .auth-title {
+            font-family: var(--font-display);
+            font-size: var(--text-3xl);
+            font-weight: 600;
+            margin-bottom: var(--space-sm);
+        }
+
+        .auth-subtitle {
+            color: var(--text-secondary);
+            font-size: var(--text-base);
+        }
+
+        .user-type-toggle {
+            display: flex;
+            background: var(--color-sand);
+            border-radius: var(--radius-full);
+            padding: 4px;
+            margin-bottom: var(--space-2xl);
+            position: relative;
+        }
+
+        .toggle-option {
+            flex: 1;
+            padding: var(--space-md);
+            text-align: center;
+            font-family: var(--font-display);
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: var(--radius-full);
+            transition: all var(--transition-base);
+            position: relative;
+            z-index: 2;
+        }
+
+        .toggle-option.active {
+            color: white;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: var(--color-primary);
+            border-radius: var(--radius-full);
+            transition: transform var(--transition-spring);
+            box-shadow: var(--shadow-md);
+        }
+
+        .toggle-option:last-child.active ~ .toggle-slider {
+            transform: translateX(100%);
+        }
+
+        .google-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-md);
+            padding: var(--space-md) var(--space-xl);
+            background: white;
+            border: 2px solid var(--color-sand);
+            border-radius: var(--radius-full);
+            font-family: var(--font-display);
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            margin-bottom: var(--space-xl);
+        }
+
+        .google-btn:hover {
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: var(--space-xl) 0;
+            color: var(--text-tertiary);
+            font-size: var(--text-sm);
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--color-sand);
+        }
+
+        .divider span {
+            padding: 0 var(--space-md);
+        }
+
+        .specialist-notice {
+            background: rgba(232, 196, 104, 0.1);
+            border-left: 4px solid var(--color-accent);
+            padding: var(--space-md);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-lg);
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+        }
+
+        .file-upload {
+            position: relative;
+            margin-bottom: var(--space-lg);
+        }
+
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            padding: var(--space-lg);
+            border: 2px dashed var(--color-sand);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-align: center;
+        }
+
+        .file-upload-label:hover {
+            border-color: var(--color-primary);
+            background: rgba(122, 155, 118, 0.05);
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .file-name {
+            font-size: var(--text-sm);
+            color: var(--color-primary-dark);
+            margin-top: var(--space-xs);
+        }
+
+        .auth-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: var(--space-lg);
+            font-size: var(--text-sm);
+        }
+
+        .verification-badge {
+            background: rgba(232, 196, 104, 0.2);
+            border: 2px solid var(--color-accent);
+            padding: var(--space-xl);
+            border-radius: var(--radius-md);
+            text-align: center;
+            margin-top: var(--space-xl);
+        }
+
+        .verification-badge h4 {
+            color: var(--color-accent);
+            font-size: var(--text-xl);
+            margin-bottom: var(--space-md);
+        }
+
+        @media (max-width: 640px) {
+            .auth-box {
+                padding: var(--space-2xl);
+            }
+        }
+
+        body {
+            padding-top: 80px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="specialists.html" class="nav-link">Specialists</a></li>
+                <li><a href="store.html" class="nav-link">Pricing</a></li>
+                <li><a href="ai-chat.html" class="nav-link">AI Chat</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span data-dark-icon>🌙</span></button>
+                <a href="login.html" class="btn btn-outline" id="navLoginBtn">Login</a>
+                <a href="login.html?signup=true" class="btn btn-primary" id="navSignupBtn">Sign Up</a>
+                <a href="dashboard.html" class="btn btn-outline" id="navDashBtn" style="display:none">Dashboard</a>
+                <button class="btn btn-ghost" data-action="logout" id="navLogoutBtn" style="display:none">Logout</button>
+            </div>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="auth-container">
+        <div class="auth-shape auth-shape-1"></div>
+        <div class="auth-shape auth-shape-2"></div>
+
+        <div class="auth-box">
+            <div class="auth-header">
+                <svg class="auth-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <h1 class="auth-title" id="authTitle">Welcome Back</h1>
+                <p class="auth-subtitle" id="authSubtitle">Login to continue your wellness journey</p>
+            </div>
+
+            <div class="user-type-toggle">
+                <div class="toggle-option active" id="userToggle" onclick="switchUserType('user')">
+                    I need support
+                </div>
+                <div class="toggle-option" id="specialistToggle" onclick="switchUserType('specialist')">
+                    I'm a specialist
+                </div>
+                <div class="toggle-slider"></div>
+            </div>
+
+            <div class="specialist-notice" id="specialistNotice" style="display: none;">
+                ⚠️ Specialists require credential verification. Your account will be under review for 24-48 hours after signup.
+            </div>
+
+            <button class="google-btn" onclick="handleGoogleSignIn()">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span id="googleBtnText">Sign in with Google</span>
+            </button>
+
+            <div class="divider">
+                <span>or</span>
+            </div>
+
+            <form id="authForm" onsubmit="handleSubmit(event)">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" class="form-input" placeholder="you@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                </div>
+
+                <div id="specialistFields" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Government ID (Aadhaar Card)</label>
+                        <div class="file-upload">
+                            <label class="file-upload-label" for="aadharFile">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+                                </svg>
+                                <span>Upload Aadhaar Card</span>
+                            </label>
+                            <input type="file" id="aadharFile" accept="image/*,.pdf">
+                            <div class="file-name" id="aadharFileName"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Degree Certificate</label>
+                        <div class="file-upload">
+                            <label class="file-upload-label" for="degreeFile">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+                                </svg>
+                                <span>Upload Degree</span>
+                            </label>
+                            <input type="file" id="degreeFile" accept="image/*,.pdf">
+                            <div class="file-name" id="degreeFileName"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Practicing License</label>
+                        <div class="file-upload">
+                            <label class="file-upload-label" for="licenseFile">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+                                </svg>
+                                <span>Upload License</span>
+                            </label>
+                            <input type="file" id="licenseFile" accept="image/*,.pdf">
+                            <div class="file-name" id="licenseFileName"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="licenseNumber">License Number</label>
+                        <input type="text" id="licenseNumber" class="form-input" placeholder="Enter license number">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="specialization">Specialization</label>
+                        <select id="specialization" class="form-select">
+                            <option value="">Select specialization</option>
+                            <option value="clinical-psychology">Clinical Psychology</option>
+                            <option value="psychiatry">Psychiatry</option>
+                            <option value="counseling">Counseling</option>
+                            <option value="family-therapy">Family Therapy</option>
+                            <option value="cognitive-behavioral">Cognitive Behavioral Therapy</option>
+                            <option value="trauma">Trauma & PTSD</option>
+                            <option value="addiction">Addiction</option>
+                            <option value="child-adolescent">Child & Adolescent</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="experience">Years of Experience</label>
+                        <input type="number" id="experience" class="form-input" min="0" max="50" placeholder="e.g., 5">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="bio">About You (500 characters max)</label>
+                        <textarea id="bio" class="form-textarea" maxlength="500" placeholder="Brief introduction about your approach to therapy..."></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="auth-links">
+                <a href="#" onclick="toggleMode(); return false;" id="toggleLink">New here? Sign up</a>
+                <a href="#" onclick="showToast('Password reset link sent! Check your inbox.', 'success'); return false;">Forgot password?</a>
+            </div>
+
+            <div class="verification-badge" id="verificationBadge" style="display: none;">
+                <h4>⏳ Under Review</h4>
+                <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;">
+                    Your application is being reviewed. We'll notify you within 24-48 hours.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="welcomeModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-icon">🎉</div>
+                <h3 class="modal-title">Welcome to Serenity Mindspace!</h3>
+                <p class="modal-subtitle">You've received 100 tokens to get started!</p>
+            </div>
+            <div class="modal-body">
+                <div class="card card-flat">
+                    <h4 style="margin-bottom: var(--space-md);">Use them to:</h4>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="padding: var(--space-sm) 0; display: flex; align-items: center; gap: var(--space-md);">
+                            <span style="font-size: 1.5rem;">💬</span>
+                            <span>Chat with our AI assistant</span>
+                        </li>
+                        <li style="padding: var(--space-sm) 0; display: flex; align-items: center; gap: var(--space-md);">
+                            <span style="font-size: 1.5rem;">👨‍⚕️</span>
+                            <span>Book sessions with specialists</span>
+                        </li>
+                        <li style="padding: var(--space-sm) 0; display: flex; align-items: center; gap: var(--space-md);">
+                            <span style="font-size: 1.5rem;">❤️</span>
+                            <span>Tip specialists you love</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <a href="assessment.html" class="btn btn-primary btn-lg">Start Your Journey →</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isSignupMode = false;
+        let userType = 'user';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('signup') === 'true') {
+            toggleMode();
+        }
+
+        function switchUserType(type) {
+            userType = type;
+            const userToggle = document.getElementById('userToggle');
+            const specialistToggle = document.getElementById('specialistToggle');
+            const specialistNotice = document.getElementById('specialistNotice');
+            const specialistFields = document.getElementById('specialistFields');
+            const googleBtnText = document.getElementById('googleBtnText');
+
+            if (type === 'user') {
+                userToggle.classList.add('active');
+                specialistToggle.classList.remove('active');
+                specialistNotice.style.display = 'none';
+                if (isSignupMode) {
+                    specialistFields.style.display = 'none';
+                }
+                googleBtnText.textContent = isSignupMode ? 'Sign up with Google' : 'Sign in with Google';
+            } else {
+                userToggle.classList.remove('active');
+                specialistToggle.classList.add('active');
+                specialistNotice.style.display = 'block';
+                if (isSignupMode) {
+                    specialistFields.style.display = 'block';
+                }
+                googleBtnText.textContent = isSignupMode ? 'Continue with Google' : 'Sign in with Google';
+            }
+        }
+
+        function toggleMode() {
+            isSignupMode = !isSignupMode;
+            const authTitle = document.getElementById('authTitle');
+            const authSubtitle = document.getElementById('authSubtitle');
+            const submitBtn = document.getElementById('submitBtn');
+            const toggleLink = document.getElementById('toggleLink');
+            const specialistFields = document.getElementById('specialistFields');
+
+            if (isSignupMode) {
+                authTitle.textContent = 'Create Your Account';
+                authSubtitle.textContent = 'Join thousands on their wellness journey';
+                submitBtn.textContent = 'Create Account';
+                toggleLink.textContent = 'Already have an account? Sign in';
+                if (userType === 'specialist') {
+                    specialistFields.style.display = 'block';
+                }
+            } else {
+                authTitle.textContent = 'Welcome Back';
+                authSubtitle.textContent = 'Login to continue your wellness journey';
+                submitBtn.textContent = 'Sign In';
+                toggleLink.textContent = 'New here? Sign up';
+                specialistFields.style.display = 'none';
+            }
+        }
+
+        const fileInputs = ['aadharFile', 'degreeFile', 'licenseFile'];
+        fileInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('change', (e) => {
+                    const fileName = e.target.files[0]?.name;
+                    const fileNameDiv = document.getElementById(inputId + 'Name');
+                    if (fileName && fileNameDiv) {
+                        fileNameDiv.textContent = '✓ ' + fileName;
+                    }
+                });
+            }
+        });
+
+        function handleGoogleSignIn() {
+            showToast('Google Sign-In is not connected yet. Please use email and password.', 'info');
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            const emailEl = document.getElementById('email');
+            const passwordEl = document.getElementById('password');
+
+            const email = emailEl.value.trim();
+            const password = passwordEl.value.trim();
+
+            if (!email || !password) {
+                showToast('Please fill all required fields.', 'error');
+                return;
+            }
+
+            if (!validateEmail(email)) {
+                showToast('Please enter a valid email address.', 'error');
+                return;
+            }
+
+            if (isSignupMode && userType === 'specialist') {
+                const requiredFiles = ['aadharFile', 'degreeFile', 'licenseFile'];
+                const missingFiles = requiredFiles.filter(id => !document.getElementById(id).files.length);
+
+                if (missingFiles.length > 0) {
+                    showToast('Please upload all required documents to continue.', 'warning');
+                    return;
+                }
+            }
+
+            const action = isSignupMode ? 'signup' : 'login';
+
+            try {
+                const response = await fetch(API_BASE + '/api/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        action: action,
+                        user_type: userType
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    showToast(data.message || 'Authentication failed.', 'error');
+                    return;
+                }
+
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('userType', userType);
+                localStorage.setItem('userName', email.split('@')[0]);
+                localStorage.setItem('user_id', data.user_id);
+                if (data.tokens !== undefined) {
+                    localStorage.setItem('tokens', data.tokens.toString());
+                }
+
+                if (action === 'signup' && !localStorage.getItem('tokens')) {
+                    localStorage.setItem('tokens', '100');
+                }
+
+                if (action === 'signup' && userType === 'specialist') {
+                    localStorage.setItem('verificationStatus', 'pending');
+                    const badge = document.getElementById('verificationBadge');
+                    if (badge) badge.style.display = 'block';
+                }
+
+                showToast(data.message || 'Success!', 'success');
+
+                setTimeout(() => {
+                    let rUrl = data.redirect || 'choose-support.html';
+                    if (rUrl.startsWith('/')) rUrl = rUrl.substring(1);
+                    window.location.href = rUrl;
+                }, 800);
+
+            } catch (error) {
+                console.error('Auth error:', error);
+                showToast('Server error. Please try again.', 'error');
+            }
+        }
+    </script>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Serenity Mindspace</h4>
+                    <p style="color:rgba(255,255,255,0.7);font-size:var(--text-sm);">Your safe space for mental wellness.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Platform</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="specialists.html">Specialists</a></li>
+                        <li><a href="store.html">Pricing</a></li>
+                        <li><a href="ai-chat.html">AI Chat</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section crisis-resources">
+                    <h4>⚠️ Crisis Resources</h4>
+                    <p style="color:rgba(255,255,255,0.9);font-size:var(--text-sm);margin-bottom:var(--space-sm);">If you are in crisis:</p>
+                    <a href="tel:9152987821" class="crisis-number">iCall — 9152987821</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span class="footer-year"></span> Serenity Mindspace. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());
+    </script>
+</body>
+</html>
