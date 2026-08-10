@@ -1,9 +1,33 @@
 // Serenity Mindspace - Shared Utility Functions v2.0
 
 // Dynamic API Base URL detection for decoupled hosting
-const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
-    ? window.location.origin
-    : 'BACKEND_API_URL';
+const API_BASE = (() => {
+    if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+        return window.location.origin;
+    }
+    return localStorage.getItem('backend_url') || 'https://mental-health-rag-project.onrender.com';
+})();
+
+// Intercept all fetch requests to automatically attach cookies for cross-origin hosting
+const originalFetch = window.fetch;
+window.fetch = function (url, options = {}) {
+    if (typeof url === 'string' && (url.startsWith('http') || url.startsWith('/api'))) {
+        options.credentials = 'include';
+    }
+    return originalFetch(url, options);
+};
+
+// Helper function to update backend URL in console if needed
+function setBackendUrl(url) {
+    if (!url) {
+        localStorage.removeItem('backend_url');
+        console.log("Backend URL reset to default guess.");
+    } else {
+        localStorage.setItem('backend_url', url);
+        console.log("Backend URL updated to: " + url);
+    }
+    window.location.reload();
+}
 
 /* ==========================================
    TOKEN MANAGEMENT

@@ -11,7 +11,7 @@ This module replaces Flask with FastAPI, providing:
 ===============================================================================
 """
 
-import os
+import os, sys
 import datetime
 from typing import Optional
 import json
@@ -190,7 +190,7 @@ app = FastAPI(title="MindMate AI — Full Stack Wellness Companion", lifespan=li
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins (local dev + any GitHub Pages subdomains)
+    allow_origin_regex="https://.*\\.github\\.io|http://localhost:.*|http://127\\.0\\.0\\.1:.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -199,7 +199,20 @@ app.add_middleware(
 # Starlette Session Middleware (cookie-based login sessions fallback)
 # Generates a random session secret key if not set in .env
 SESSION_SECRET = os.getenv("SESSION_SECRET", os.urandom(24).hex())
-app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
+
+# In production (cross-origin decoupled hosting), SameSite must be None and secure (https_only) must be True
+# to allow session cookies across the github.io and onrender.com domains
+IS_TESTING = "pytest" in sys.modules or os.getenv("TESTING") is not None
+IS_PROD = (os.getenv("DATABASE_URL") is not None or os.getenv("RENDER") is not None) and not IS_TESTING
+if IS_PROD:
+    app.add_middleware(
+        SessionMiddleware, 
+        secret_key=SESSION_SECRET,
+        same_site="none",
+        https_only=True
+    )
+else:
+    app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
 
 # Mount frontend static directory (CSS, JS, manifest) if it exists (local development fallback)
 if os.path.exists("frontend/static"):
