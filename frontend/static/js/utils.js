@@ -70,6 +70,7 @@ function resetMessageCount() { localStorage.removeItem('aiMessageCount'); }
    ========================================== */
 function isLoggedIn() { return localStorage.getItem('isLoggedIn') === 'true' && !!localStorage.getItem('user_id'); }
 function getUserType() { return localStorage.getItem('userType') || 'user'; }
+function getSpecialistStatus() { return localStorage.getItem('specialist_status') || 'none'; }
 function getUserName() { return localStorage.getItem('userName') || 'Friend'; }
 function login(userType, userName) {
     localStorage.setItem('isLoggedIn', 'true');
@@ -84,6 +85,7 @@ function logout() {
     localStorage.removeItem('userName');
     localStorage.removeItem('user_id');
     localStorage.removeItem('tokens');
+    localStorage.removeItem('specialist_status');
     showToast('Logged out successfully', 'success');
     setTimeout(() => { window.location.href = 'index.html'; }, 900);
 }
@@ -118,6 +120,11 @@ async function syncSessionWithBackend() {
             localStorage.setItem('userName', data.full_name || data.email.split('@')[0]);
             localStorage.setItem('user_id', data.user_id);
             localStorage.setItem('tokens', data.tokens.toString());
+            if (data.specialist_status) {
+                localStorage.setItem('specialist_status', data.specialist_status);
+            } else {
+                localStorage.removeItem('specialist_status');
+            }
             updateAllTokenDisplays();
             updateNavAuthState();
         } else {
@@ -127,6 +134,7 @@ async function syncSessionWithBackend() {
                 localStorage.removeItem('userName');
                 localStorage.removeItem('user_id');
                 localStorage.removeItem('tokens');
+                localStorage.removeItem('specialist_status');
                 updateNavAuthState();
             }
         }
@@ -548,6 +556,194 @@ document.addEventListener('DOMContentLoaded', function () {
         window.location.href = rUrl;
     }
 
+    // Start incoming call listener for normal users
+    if (getUserType() === 'user') {
+        if (page === 'chat-room') {
+            const params = new URLSearchParams(window.location.search);
+            const bId = parseInt(params.get('id') || '1');
+            startIncomingCallListener(bId);
+        } else if (page === 'dashboard') {
+            (async () => {
+                try {
+                    const response = await fetch(API_BASE + '/api/user/bookings');
+                    if (response.ok) {
+                        const bookings = await response.json();
+                        const activeBooking = bookings.find(b => b.session_type === 'Video Call' && b.status !== 'completed' && b.status !== 'cancelled');
+                        if (activeBooking) {
+                            startIncomingCallListener(activeBooking.id);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to load user bookings for caller listener:", e);
+                }
+            })();
+        }
+    }
+
     startLiveClock();
     trackPageView(document.title);
 });
+
+/* ==========================================
+   📹 INCOMING WEBRTC CALL ENGINE
+   ========================================== */
+let callCheckInterval = null;
+let audioCtx = null;
+let ringtoneInterval = null;
+
+function playRingtone() {
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        ringtoneInterval = setInterval(() => {
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(480, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.1);
+            gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.8);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.0);
+            
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc1.start();
+            osc2.start();
+            osc1.stop(audioCtx.currentTime + 1.0);
+            osc2.stop(audioCtx.currentTime + 1.0);
+        }, 2000);
+    } catch (e) {
+        console.error("Audio Context error:", e);
+    }
+}
+
+function stopRingtone() {
+    if (ringtoneInterval) {
+        clearInterval(ringtoneInterval);
+        ringtoneInterval = null;
+    }
+    if (audioCtx) {
+        audioCtx.close();
+        audioCtx = null;
+    }
+}
+
+function showIncomingCallModal(bookingId, partnerName, partnerAvatar) {
+    if (document.getElementById('incomingCallModal')) return;
+    
+    playRingtone();
+    
+    const modal = document.createElement('div');
+    modal.id = 'incomingCallModal';
+    modal.style = `
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(17, 24, 39, 0.85);
+        backdrop-filter: blur(12px);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 99999;
+        font-family: var(--font-primary);
+        color: white;
+    `;
+    
+    modal.innerHTML = `
+        <div style="
+            background: var(--bg-elevated);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: var(--space-2xl);
+            border-radius: var(--radius-xl);
+            width: 90%; max-width: 400px;
+            text-align: center;
+            box-shadow: var(--shadow-2xl);
+            color: var(--text-primary);
+        ">
+            <img src="${partnerAvatar}" alt="${partnerName}" style="
+                width: 96px; height: 96px; border-radius: 50%;
+                border: 4px solid var(--color-primary);
+                margin-bottom: var(--space-lg);
+                object-fit: cover;
+            ">
+            <h3 style="margin-bottom: var(--space-xs); font-size: var(--text-lg);">${partnerName}</h3>
+            <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-xl);">
+                Incoming video session call...
+            </p>
+            <div style="display: flex; gap: var(--space-md); justify-content: center;">
+                <button id="declineCallBtn" style="
+                    background: var(--color-error); color: white;
+                    border: none; padding: var(--space-md) var(--space-xl);
+                    border-radius: var(--radius-md); font-weight: 600;
+                    cursor: pointer; transition: opacity 0.2s;
+                ">Decline</button>
+                <button id="acceptCallBtn" style="
+                    background: var(--color-primary); color: white;
+                    border: none; padding: var(--space-md) var(--space-xl);
+                    border-radius: var(--radius-md); font-weight: 600;
+                    cursor: pointer; transition: opacity 0.2s;
+                ">Accept</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    document.getElementById('acceptCallBtn').onclick = async () => {
+        stopRingtone();
+        modal.remove();
+        await fetch(`${API_BASE}/api/bookings/${bookingId}/call-state`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_calling: 2 })
+        });
+        window.location.href = `video-call.html?id=${bookingId}&role=user`;
+    };
+    
+    document.getElementById('declineCallBtn').onclick = async () => {
+        stopRingtone();
+        modal.remove();
+        await fetch(`${API_BASE}/api/bookings/${bookingId}/call-state`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_calling: 3 })
+        });
+    };
+}
+
+function hideIncomingCallModal() {
+    stopRingtone();
+    const modal = document.getElementById('incomingCallModal');
+    if (modal) modal.remove();
+}
+
+function startIncomingCallListener(bookingId) {
+    if (callCheckInterval) clearInterval(callCheckInterval);
+    if (localStorage.getItem('userType') !== 'user') return;
+    
+    callCheckInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`${API_BASE}/api/bookings/${bookingId}/call-state`);
+            if (!response.ok) return;
+            const data = await response.json();
+            
+            if (data.is_calling === 1) {
+                showIncomingCallModal(data.booking_id, data.partner_name, data.partner_avatar);
+            } else if (data.is_calling === 0 || data.is_calling === 3) {
+                hideIncomingCallModal();
+            }
+        } catch (e) {
+            console.error("Error checking call state:", e);
+        }
+    }, 3000);
+}
+
+function stopIncomingCallListener() {
+    if (callCheckInterval) {
+        clearInterval(callCheckInterval);
+        callCheckInterval = null;
+    }
+}

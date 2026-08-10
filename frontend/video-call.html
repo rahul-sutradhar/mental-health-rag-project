@@ -216,6 +216,38 @@
                 min-height: 420px;
             }
         }
+
+        .initial-avatar-large {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            text-transform: uppercase;
+            font-family: var(--font-display);
+        }
+
+        .initial-avatar-small {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            margin: 0 auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            text-transform: uppercase;
+            font-family: var(--font-display);
+        }
     </style>
 </head>
 <body>
@@ -274,7 +306,7 @@
                         <div class="video-main" id="videoMain">
                             <video id="remoteVideo" autoplay playsinline></video>
                             <div class="video-placeholder" id="remotePlaceholder">
-                                <img id="videoMainAvatar" class="video-main-avatar" src="https://i.pravatar.cc/150?img=47" alt="Specialist">
+                                <div id="remoteAvatarContainer" class="initial-avatar-large">S</div>
                                 <h2 id="videoMainName" style="color:white; margin-bottom: var(--space-sm);">Dr. Sarah Johnson</h2>
                                 <p style="opacity:0.8; margin:0;">Your session is live. Take a breath and begin whenever you're ready.</p>
                             </div>
@@ -283,8 +315,8 @@
                         <div class="video-self" id="videoSelf">
                             <video id="localVideo" autoplay muted playsinline></video>
                             <div class="video-placeholder" id="localPlaceholder">
-                                <div style="font-size:1.5rem; margin-bottom: var(--space-xs);">🙂</div>
-                                <div style="font-size:var(--text-sm); opacity:0.85;">You</div>
+                                <div id="localAvatarContainer" class="initial-avatar-small">Y</div>
+                                <div style="font-size:var(--text-xs); opacity:0.85; margin-top: 6px;">You</div>
                             </div>
                         </div>
                     </div>
@@ -360,6 +392,7 @@
         let localStream = null;
         let peerConnection = null;
         let signalingSocket = null;
+        let remoteCandidatesQueue = [];
         let bookingId = 1;
         let role = 'user'; // 'user' or 'specialist'
 
@@ -397,6 +430,7 @@
                 document.getElementById('detailName').textContent = partnerName;
                 document.getElementById('detailDate').textContent = booking.date;
                 document.getElementById('detailTime').textContent = booking.time;
+                updateInitialAvatars();
             }
 
             // Start timer
@@ -410,23 +444,89 @@
                 }
             }, 1000);
 
+            if (signalRole === 'client') {
+                try {
+                    const statusRes = await fetch(`${API_BASE}/api/bookings/${bookingId}/call-state`);
+                    if (statusRes.ok) {
+                        const callState = await statusRes.json();
+                        if (callState.is_calling !== 1 && callState.is_calling !== 2) {
+                            alert("No active video call session found. Please wait for your specialist to call you.");
+                            window.location.href = "dashboard.html";
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error verifying call state:", e);
+                }
+            }
+
             // Initialize local camera and WebRTC
             try {
                 await initLocalVideo();
                 initSignaling(signalRole);
+                if (signalRole === 'specialist') {
+                    await fetch(`${API_BASE}/api/bookings/${bookingId}/call-state`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ is_calling: 1 })
+                    });
+                    startSpecialistCallStatusChecker();
+                }
             } catch (err) {
                 console.error("Failed to initialize video call media:", err);
                 showToast("Camera/Microphone access is required for real video calling.", "error");
             }
         });
 
+        let callStatusInterval = null;
+        function startSpecialistCallStatusChecker() {
+            callStatusInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${API_BASE}/api/bookings/${bookingId}/call-state`);
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    
+                    const statusTextEl = document.querySelector('.video-stage p');
+                    if (data.is_calling === 1) {
+                        if (statusTextEl) statusTextEl.textContent = "Ringing client... Waiting for them to connect.";
+                    } else if (data.is_calling === 3) {
+                        if (statusTextEl) statusTextEl.textContent = "Call declined by client.";
+                        showToast("Client declined the call.", "error");
+                        clearInterval(callStatusInterval);
+                    } else if (data.is_calling === 2) {
+                        if (statusTextEl) statusTextEl.textContent = "Client accepted. Connecting audio/video...";
+                    }
+                } catch (e) {
+                    console.error("Error reading call status:", e);
+                }
+            }, 3000);
+        }
+
         async function initLocalVideo() {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            try {
+                // Try full video + audio
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            } catch (videoError) {
+                console.warn("Webcam not readable or missing. Trying audio-only...", videoError);
+                try {
+                    // Try audio-only
+                    localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+                } catch (audioError) {
+                    console.error("Microphone not readable or missing. Proceeding with empty stream...", audioError);
+                    // Empty fallback stream so connection doesn't break
+                    localStream = new MediaStream();
+                }
+            }
             
             const localVideo = document.getElementById('localVideo');
-            localVideo.srcObject = localStream;
-            localVideo.style.display = 'block';
-            document.getElementById('localPlaceholder').style.display = 'none';
+            if (localVideo) {
+                localVideo.srcObject = localStream;
+                if (localStream.getVideoTracks().length > 0) {
+                    localVideo.style.display = 'block';
+                    const placeholder = document.getElementById('localPlaceholder');
+                    if (placeholder) placeholder.style.display = 'none';
+                }
+            }
         }
 
         function initSignaling(signalRole) {
@@ -448,7 +548,14 @@
 
             signalingSocket.onmessage = async (msg) => {
                 const data = JSON.parse(msg.data);
-                if (data.type === 'peer-joined') {
+                if (data.type === 'room-status') {
+                    console.log("Room status received: Client present=" + data.client_connected + ", Specialist present=" + data.specialist_connected);
+                    // If client is already in the call room when specialist joins, start the call
+                    if (signalRole === 'specialist' && data.client_connected) {
+                        console.log("Client is already connected. Initiating call...");
+                        await startWebRTCCall();
+                    }
+                } else if (data.type === 'peer-joined') {
                     console.log("Peer joined session. Role: " + data.role);
                     // The specialist acts as the call initiator (caller)
                     if (signalRole === 'specialist') {
@@ -457,24 +564,61 @@
                 } else if (data.type === 'offer') {
                     console.log("Received WebRTC Offer");
                     await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                    
+                    // Process queued ICE candidates
+                    for (const candidate of remoteCandidatesQueue) {
+                        try {
+                            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                        } catch (e) {
+                            console.error("Error adding queued candidate:", e);
+                        }
+                    }
+                    remoteCandidatesQueue = [];
+
                     const answer = await peerConnection.createAnswer();
                     await peerConnection.setLocalDescription(answer);
                     signalingSocket.send(JSON.stringify({ type: 'answer', answer }));
                 } else if (data.type === 'answer') {
                     console.log("Received WebRTC Answer");
                     await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                    
+                    // Process queued ICE candidates
+                    for (const candidate of remoteCandidatesQueue) {
+                        try {
+                            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                        } catch (e) {
+                            console.error("Error adding queued candidate:", e);
+                        }
+                    }
+                    remoteCandidatesQueue = [];
                 } else if (data.type === 'candidate') {
                     console.log("Received WebRTC ICE Candidate");
-                    if (peerConnection) {
+                    if (peerConnection && peerConnection.remoteDescription) {
                         try {
                             await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
                         } catch (e) {
                             console.error("Error adding ICE candidate:", e);
                         }
+                    } else {
+                        console.log("Queuing ICE candidate until remote description is set.");
+                        remoteCandidatesQueue.push(data.candidate);
                     }
                 } else if (data.type === 'peer-left') {
                     console.log("Peer disconnected");
                     handleRemotePeerDisconnect();
+                } else if (data.type === 'camera-state') {
+                    console.log("Remote camera state changed: " + data.enabled);
+                    const remoteVideo = document.getElementById('remoteVideo');
+                    const remotePlaceholder = document.getElementById('remotePlaceholder');
+                    if (remoteVideo && remotePlaceholder) {
+                        if (data.enabled) {
+                            remoteVideo.style.display = 'block';
+                            remotePlaceholder.style.display = 'none';
+                        } else {
+                            remoteVideo.style.display = 'none';
+                            remotePlaceholder.style.display = 'flex';
+                        }
+                    }
                 }
             };
 
@@ -565,12 +709,16 @@
                 });
             }
 
+            if (signalingSocket && signalingSocket.readyState === WebSocket.OPEN) {
+                signalingSocket.send(JSON.stringify({ type: 'camera-state', enabled: camOn }));
+            }
+
             if (camOn) {
                 localVideo.style.display = 'block';
                 placeholder.style.display = 'none';
             } else {
                 localVideo.style.display = 'none';
-                placeholder.style.display = 'block';
+                placeholder.style.display = 'flex';
             }
         }
 
@@ -602,6 +750,16 @@
             if (signalingSocket) {
                 signalingSocket.close();
             }
+            if (callStatusInterval) {
+                clearInterval(callStatusInterval);
+            }
+
+            // Reset call state back to 0 (idle)
+            fetch(`${API_BASE}/api/bookings/${bookingId}/call-state`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_calling: 0 })
+            }).catch(e => console.error("Error resetting call state:", e));
 
             showToast(autoEnd ? 'Session ended. Time is up.' : 'Call ended.', 'info');
 
@@ -609,6 +767,45 @@
                 const redirectPage = role === 'specialist' ? "specialist-console.html" : "dashboard.html";
                 window.location.href = redirectPage;
             }, 600);
+        }
+
+        function getAvatarColor(name) {
+            const colors = [
+                '#1a73e8', // Google Blue
+                '#0f9d58', // Google Green
+                '#db4437', // Google Red
+                '#f4b400', // Google Yellow
+                '#ab47bc', // Purple
+                '#00acc1', // Cyan
+                '#ff7043'  // Orange
+            ];
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        function updateInitialAvatars() {
+            const remoteName = document.getElementById('videoMainName').textContent || "Specialist";
+            const remoteInitial = remoteName.trim().charAt(0).toUpperCase();
+            const remoteColor = getAvatarColor(remoteName);
+            
+            const remoteAvatarContainer = document.getElementById('remoteAvatarContainer');
+            if (remoteAvatarContainer) {
+                remoteAvatarContainer.textContent = remoteInitial;
+                remoteAvatarContainer.style.backgroundColor = remoteColor;
+            }
+            
+            const localName = localStorage.getItem('userName') || "You";
+            const localInitial = localName.trim().charAt(0).toUpperCase();
+            const localColor = getAvatarColor(localName);
+            
+            const localAvatarContainer = document.getElementById('localAvatarContainer');
+            if (localAvatarContainer) {
+                localAvatarContainer.textContent = localInitial;
+                localAvatarContainer.style.backgroundColor = localColor;
+            }
         }
     </script>
 </body>

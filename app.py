@@ -66,6 +66,8 @@ class User(Base):
     user_type = Column(String, nullable=False) # 'user', 'specialist', 'admin', 'master_admin'
     tokens = Column(Integer, default=100)      # Welcome tokens bonus
     full_name = Column(String, nullable=True)
+    specialist_status = Column(String(50), default="none") # 'none', 'pending', 'approved', 'rejected'
+    specialist_details = Column(Text, nullable=True) # Qualifications / certification details
 
 class ChatThread(Base):
     """ChatGPT-like chat threads belonging to a user."""
@@ -98,6 +100,7 @@ class SpecialistBooking(Base):
     status = Column(String, default="pending") # 'pending', 'approved', 'assigned', 'completed'
     reason = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
+    is_calling = Column(Integer, default=0) # 0=idle, 1=calling, 2=accepted, 3=declined
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 class SpecialistMessage(Base):
@@ -126,6 +129,54 @@ def upgrade_db_schema():
             db.commit()
         except Exception as e:
             print(f"⚠️ Error upgrading database schema: {e}")
+            db.rollback()
+    finally:
+        db.close()
+
+    # Check and add specialist_status column to users if missing
+    db = SessionLocal()
+    try:
+        db.execute(text("SELECT specialist_status FROM users LIMIT 1"))
+    except Exception:
+        db.rollback()
+        try:
+            print("Upgrading database schema: adding specialist_status to users...")
+            db.execute(text("ALTER TABLE users ADD COLUMN specialist_status VARCHAR(50) DEFAULT 'none'"))
+            db.commit()
+        except Exception as e:
+            print(f"⚠️ Error upgrading database (specialist_status): {e}")
+            db.rollback()
+    finally:
+        db.close()
+
+    # Check and add specialist_details column to users if missing
+    db = SessionLocal()
+    try:
+        db.execute(text("SELECT specialist_details FROM users LIMIT 1"))
+    except Exception:
+        db.rollback()
+        try:
+            print("Upgrading database schema: adding specialist_details to users...")
+            db.execute(text("ALTER TABLE users ADD COLUMN specialist_details TEXT"))
+            db.commit()
+        except Exception as e:
+            print(f"⚠️ Error upgrading database (specialist_details): {e}")
+            db.rollback()
+    finally:
+        db.close()
+
+    # Check and add is_calling column to specialist_bookings if missing
+    db = SessionLocal()
+    try:
+        db.execute(text("SELECT is_calling FROM specialist_bookings LIMIT 1"))
+    except Exception:
+        db.rollback()
+        try:
+            print("Upgrading database schema: adding is_calling to specialist_bookings...")
+            db.execute(text("ALTER TABLE specialist_bookings ADD COLUMN is_calling INTEGER DEFAULT 0"))
+            db.commit()
+        except Exception as e:
+            print(f"⚠️ Error upgrading database (is_calling): {e}")
             db.rollback()
     finally:
         db.close()
@@ -421,11 +472,22 @@ async def auth_handler(request: Request, db: Session = Depends(get_db)):
         try:
             # Secure password hashing with Argon2
             hashed_pw = ph.hash(password)
+            
+            db_user_type = user_type
+            db_specialist_status = "none"
+            db_specialist_details = None
+            if user_type == "specialist":
+                db_user_type = "user"
+                db_specialist_status = "pending"
+                db_specialist_details = data.get("specialist_details", "").strip()
+
             new_user = User(
                 email=email, 
                 password=hashed_pw, 
-                user_type=user_type,
-                full_name=email.split('@')[0].capitalize()
+                user_type=db_user_type,
+                full_name=email.split('@')[0].capitalize(),
+                specialist_status=db_specialist_status,
+                specialist_details=db_specialist_details
             )
             db.add(new_user)
             db.commit()
@@ -437,8 +499,8 @@ async def auth_handler(request: Request, db: Session = Depends(get_db)):
             request.session['user_type'] = new_user.user_type
 
             if user_type == "specialist":
-                redirect_url = "specialist-console.html"
-            elif user_type in ["admin", "master_admin"]:
+                redirect_url = "dashboard.html"
+            elif db_user_type in ["admin", "master_admin"]:
                 redirect_url = "admin-dashboard.html"
             else:
                 redirect_url = "choose-support.html"
@@ -450,7 +512,8 @@ async def auth_handler(request: Request, db: Session = Depends(get_db)):
                 'user_id': new_user.id,
                 'email': new_user.email,
                 'tokens': new_user.tokens,
-                'user_type': new_user.user_type
+                'user_type': new_user.user_type,
+                'specialist_status': new_user.specialist_status
             }
         except Exception as e:
             db.rollback()
@@ -484,7 +547,8 @@ async def auth_handler(request: Request, db: Session = Depends(get_db)):
             'user_id': user.id,
             'email': user.email,
             'tokens': user.tokens,
-            'user_type': user.user_type
+            'user_type': user.user_type,
+            'specialist_status': user.specialist_status
         }
     except VerifyMismatchError:
         return JSONResponse({'success': False, 'message': 'Invalid credentials.'}, status_code=401)
@@ -494,6 +558,81 @@ async def logout_handler(request: Request):
     """Clears user session cookies."""
     request.session.clear()
     return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+
+import httpx
+@app.post("/api/auth/google")
+async def google_auth_handler(request: Request, db: Session = Depends(get_db)):
+    """Authenticates users via Google ID tokens (includes dev mock support)."""
+    data = await request.json()
+    token = data.get("credential") or data.get("id_token")
+    if not token:
+        return JSONResponse({'success': False, 'message': 'Google credential token is missing.'}, status_code=400)
+        
+    email = None
+    name = "Google User"
+    
+    # 1. Dev mock simulation check
+    if token.startswith("mock:"):
+        email = token.replace("mock:", "").strip().lower()
+        name = email.split('@')[0].capitalize()
+    else:
+        # 2. Call Google's tokeninfo verification endpoint
+        try:
+            async with httpx.AsyncClient() as client:
+                res = await client.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={token}")
+                if res.status_code == 200:
+                    payload = res.json()
+                    email = payload.get("email")
+                    name = payload.get("name", name)
+                else:
+                    return JSONResponse({'success': False, 'message': 'Invalid Google ID token.'}, status_code=400)
+        except Exception as e:
+            return JSONResponse({'success': False, 'message': f'Failed to contact Google verification server: {str(e)}'}, status_code=500)
+            
+    if not email:
+        return JSONResponse({'success': False, 'message': 'Could not retrieve email from Google credential.'}, status_code=400)
+        
+    # Check if user exists
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        # Create a new user with google authentication placeholder
+        try:
+            user = User(
+                email=email,
+                password="google-auth-placeholder",
+                user_type="user",
+                full_name=name
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        except Exception as e:
+            db.rollback()
+            return JSONResponse({'success': False, 'message': f'Error registering Google user: {str(e)}'}, status_code=500)
+            
+    # Establish session
+    request.session['user_id'] = user.id
+    request.session['email'] = user.email
+    request.session['user_type'] = user.user_type
+    
+    # Determine redirect
+    if user.user_type == "specialist":
+        redirect_url = "specialist-console.html"
+    elif user.user_type in ["admin", "master_admin"]:
+        redirect_url = "admin-dashboard.html"
+    else:
+        redirect_url = "choose-support.html"
+        
+    return {
+        'success': True,
+        'message': 'Logged in via Google successfully!',
+        'redirect': redirect_url,
+        'user_id': user.id,
+        'email': user.email,
+        'tokens': user.tokens,
+        'user_type': user.user_type,
+        'specialist_status': user.specialist_status
+    }
 
 
 @app.get("/api/session")
@@ -513,7 +652,8 @@ async def session_handler(request: Request, db: Session = Depends(get_db)):
         'email': user.email,
         'user_type': user.user_type,
         'full_name': user.full_name or user.email.split("@")[0].capitalize(),
-        'tokens': user.tokens
+        'tokens': user.tokens,
+        'specialist_status': user.specialist_status
     }
 
 
@@ -824,6 +964,62 @@ async def update_booking_status(booking_id: int, request: Request, db: Session =
     booking.status = status_val
     db.commit()
     return {"success": True, "status": booking.status}
+
+@app.get("/api/bookings/{booking_id}/call-state")
+async def get_call_state(booking_id: int, request: Request, db: Session = Depends(get_db)):
+    """Check the call state of a booking session."""
+    user_id = get_user_id(request)
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+        
+    booking = db.query(SpecialistBooking).filter(SpecialistBooking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+        
+    if booking.user_id != user_id and booking.specialist_id != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    partner_name = ""
+    partner_avatar = "https://i.pravatar.cc/150?img=47"
+    if user.user_type == "specialist":
+        partner = db.query(User).filter(User.id == booking.user_id).first()
+        partner_name = partner.full_name if partner else "Client"
+    else:
+        partner = db.query(User).filter(User.id == booking.specialist_id).first()
+        partner_name = partner.full_name if partner else "Specialist"
+        
+    return {
+        "booking_id": booking.id,
+        "is_calling": booking.is_calling,
+        "partner_name": partner_name,
+        "partner_avatar": partner_avatar,
+        "session_type": booking.session_type
+    }
+
+@app.put("/api/bookings/{booking_id}/call-state")
+async def update_call_state(booking_id: int, request: Request, db: Session = Depends(get_db)):
+    """Update the call state of a booking session."""
+    user_id = get_user_id(request)
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+        
+    booking = db.query(SpecialistBooking).filter(SpecialistBooking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+        
+    if booking.user_id != user_id and booking.specialist_id != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    data = await request.json()
+    is_calling_val = data.get("is_calling")
+    if is_calling_val is None or is_calling_val not in [0, 1, 2, 3]:
+        raise HTTPException(status_code=400, detail="Invalid call state")
+        
+    booking.is_calling = is_calling_val
+    db.commit()
+    return {"success": True, "is_calling": booking.is_calling}
 
 @app.get("/api/bookings/{booking_id}/messages")
 async def get_booking_messages(booking_id: int, request: Request, db: Session = Depends(get_db)):
@@ -1159,6 +1355,56 @@ async def admin_delete_booking(booking_id: int, request: Request, db: Session = 
     db.commit()
     return {"success": True}
 
+@app.get("/api/admin/specialist-requests")
+async def admin_get_specialist_requests(request: Request, db: Session = Depends(get_db)):
+    """Retrieve all users with pending specialist verification requests."""
+    user_id = get_user_id(request)
+    actor = db.query(User).filter(User.id == user_id).first()
+    if not actor or actor.user_type not in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    requests = db.query(User).filter(User.specialist_status == "pending").all()
+    return [{
+        "id": u.id,
+        "email": u.email,
+        "full_name": u.full_name or u.email.split("@")[0].capitalize(),
+        "specialist_status": u.specialist_status,
+        "specialist_details": u.specialist_details
+    } for u in requests]
+
+@app.post("/api/admin/specialist-requests/{target_id}/approve")
+async def admin_approve_specialist_request(target_id: int, request: Request, db: Session = Depends(get_db)):
+    """Approve a specialist request, upgrading user to specialist."""
+    user_id = get_user_id(request)
+    actor = db.query(User).filter(User.id == user_id).first()
+    if not actor or actor.user_type not in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    target = db.query(User).filter(User.id == target_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    target.user_type = "specialist"
+    target.specialist_status = "approved"
+    db.commit()
+    return {"success": True}
+
+@app.post("/api/admin/specialist-requests/{target_id}/reject")
+async def admin_reject_specialist_request(target_id: int, request: Request, db: Session = Depends(get_db)):
+    """Reject a specialist request, resetting their specialist status."""
+    user_id = get_user_id(request)
+    actor = db.query(User).filter(User.id == user_id).first()
+    if not actor or actor.user_type not in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    target = db.query(User).filter(User.id == target_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    target.specialist_status = "rejected"
+    db.commit()
+    return {"success": True}
+
 
 # ==============================================================================
 # 📹 WEBRTC VIDEO SIGNALING
@@ -1193,6 +1439,14 @@ video_manager = VideoSignalingManager()
 @app.websocket("/ws/video/{booking_id}/{role}")
 async def websocket_video_endpoint(websocket: WebSocket, booking_id: int, role: str):
     await video_manager.connect(websocket, booking_id, role)
+    # Send current room status to the newly connected participant
+    room_info = {
+        "type": "room-status",
+        "client_connected": "client" in video_manager.active_calls.get(booking_id, {}),
+        "specialist_connected": "specialist" in video_manager.active_calls.get(booking_id, {})
+    }
+    await websocket.send_text(json.dumps(room_info))
+    
     # Notify partner that a peer has joined
     await video_manager.send_to_partner(
         json.dumps({"type": "peer-joined", "role": role}),

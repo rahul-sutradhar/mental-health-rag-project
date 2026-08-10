@@ -554,7 +554,7 @@
 
                 if (response.ok) {
                     showToast('Session completed successfully', 'success');
-                    loadSessions();
+                    await loadSessions();
                     selectSession(bookingId);
                 } else {
                     showToast('Failed to update status', 'error');

@@ -206,6 +206,7 @@
             <div class="admin-tabs">
                 <button class="admin-tab-btn active" onclick="switchTab('usersTab', this)">👤 User & Role Management</button>
                 <button class="admin-tab-btn" onclick="switchTab('bookingsTab', this)">🗓️ Video Call & Session Bookings</button>
+                <button class="admin-tab-btn" onclick="switchTab('specialistsTab', this)">💼 Specialist Requests</button>
             </div>
 
             <!-- TAB 1: User list and roles management -->
@@ -255,6 +256,33 @@
                                 <tr>
                                     <td colspan="7" style="text-align:center; padding:var(--space-2xl); color:var(--text-secondary);">
                                         Loading specialist bookings...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: Specialist Requests verification list -->
+            <section class="admin-panel" id="specialistsTab">
+                <div class="table-card">
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Full Name</th>
+                                    <th>Email Address</th>
+                                    <th>Status</th>
+                                    <th>Submission Info</th>
+                                    <th style="text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="specialistRequestsTableBody">
+                                <tr>
+                                    <td colspan="6" style="text-align:center; padding:var(--space-2xl); color:var(--text-secondary);">
+                                        Loading specialist verification requests...
                                     </td>
                                 </tr>
                             </tbody>
@@ -412,6 +440,26 @@
                 </div>
             </form>
         </div>
+    <!-- REVIEW CREDENTIALS MODAL -->
+    <div class="modal-overlay" id="reviewCredentialsModal" style="display: none;">
+        <div class="modal" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Review Specialist Credentials</h3>
+            </div>
+            <div class="modal-body">
+                <div class="admin-form-group">
+                    <label>Applicant Email</label>
+                    <input type="text" id="reviewEmail" class="form-input" readonly style="background:#f4f4f4;">
+                </div>
+                <div class="admin-form-group">
+                    <label>Qualifications & Certification Info</label>
+                    <textarea id="reviewDetails" class="form-textarea" readonly style="min-height: 120px; background:#f4f4f4; width:100%; border:1px solid var(--color-sand); border-radius:var(--radius-sm); padding:var(--space-sm); font-family:inherit; resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-primary" onclick="closeModal('reviewCredentialsModal')">Done</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -466,6 +514,8 @@
                 loadUserData();
             } else if (tabId === 'bookingsTab') {
                 loadBookingData();
+            } else if (tabId === 'specialistsTab') {
+                loadSpecialistRequests();
             }
         }
 
@@ -846,6 +896,95 @@
             } catch (error) {
                 console.error("Error deleting booking:", error);
                 showToast('Server error', 'error');
+            }
+        }
+
+        async function loadSpecialistRequests() {
+            const body = document.getElementById('specialistRequestsTableBody');
+            if (!body) return;
+
+            try {
+                const response = await fetch(API_BASE + '/api/admin/specialist-requests');
+                if (!response.ok) return;
+
+                const requests = await response.json();
+                renderSpecialistRequestsTable(requests);
+            } catch (error) {
+                console.error("Error fetching specialist requests:", error);
+                showToast("Failed to load requests", "error");
+            }
+        }
+
+        function renderSpecialistRequestsTable(requests) {
+            const body = document.getElementById('specialistRequestsTableBody');
+            if (!body) return;
+
+            if (requests.length === 0) {
+                body.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:var(--space-xl); color:var(--text-secondary);">No pending specialist verification requests.</td></tr>`;
+                return;
+            }
+
+            body.innerHTML = requests.map(req => {
+                const cleanDetails = req.specialist_details ? req.specialist_details.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n') : '';
+                return `
+                    <tr>
+                        <td>${req.id}</td>
+                        <td>${req.full_name}</td>
+                        <td>${req.email}</td>
+                        <td><span class="badge-role" style="background:#FEF3C7; color:#D97706; font-weight:bold;">PENDING</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline" onclick="reviewCredentials('${req.email}', '${cleanDetails}')">Review Credentials</button>
+                        </td>
+                        <td style="text-align:right;">
+                            <button class="btn btn-sm btn-primary" style="background:var(--color-success); border-color:var(--color-success); margin-right: var(--space-xs);" onclick="approveSpecialist(${req.id})">Approve</button>
+                            <button class="btn btn-sm btn-outline btn-warn" onclick="rejectSpecialist(${req.id})">Reject</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function reviewCredentials(email, details) {
+            document.getElementById('reviewEmail').value = email;
+            document.getElementById('reviewDetails').value = details || 'No credentials detail provided.';
+            openModal('reviewCredentialsModal');
+        }
+
+        async function approveSpecialist(id) {
+            if (!confirm("Are you sure you want to approve this specialist and convert their account role?")) return;
+
+            try {
+                const response = await fetch(API_BASE + `/api/admin/specialist-requests/${id}/approve`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    showToast("Specialist approved and upgraded successfully!", "success");
+                    loadSpecialistRequests();
+                } else {
+                    showToast("Failed to approve specialist", "error");
+                }
+            } catch (error) {
+                console.error("Error approving specialist:", error);
+                showToast("Server error during approval", "error");
+            }
+        }
+
+        async function rejectSpecialist(id) {
+            if (!confirm("Are you sure you want to reject this specialist request?")) return;
+
+            try {
+                const response = await fetch(API_BASE + `/api/admin/specialist-requests/${id}/reject`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    showToast("Specialist verification request rejected.", "info");
+                    loadSpecialistRequests();
+                } else {
+                    showToast("Failed to reject specialist request", "error");
+                }
+            } catch (error) {
+                console.error("Error rejecting specialist:", error);
+                showToast("Server error during rejection", "error");
             }
         }
     </script>

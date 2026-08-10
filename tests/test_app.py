@@ -264,7 +264,13 @@ def test_video_signaling_websocket():
     client = TestClient(app)
     
     with client.websocket_connect("/ws/video/99/client") as ws_client:
+        status1 = ws_client.receive_json()
+        assert status1["type"] == "room-status"
+        
         with client.websocket_connect("/ws/video/99/specialist") as ws_spec:
+            status2 = ws_spec.receive_json()
+            assert status2["type"] == "room-status"
+            
             # Check client receives "peer-joined" event
             msg = ws_client.receive_json()
             assert msg["type"] == "peer-joined"
@@ -287,3 +293,107 @@ def test_video_signaling_websocket():
             received_ans = ws_spec.receive_json()
             assert received_ans["type"] == "answer"
             assert received_ans["answer"]["sdp"] == "v=0-ans..."
+
+
+def test_video_call_state_control():
+    # 1. User books a video call session
+    user_client = get_auth_client("user@mindmate.com", "user123")
+    res = user_client.get("/api/specialists")
+    assert res.status_code == 200
+    specs = res.json()
+    spec_id = specs[0]["id"]
+
+    res = user_client.post("/api/user/bookings", json={
+        "specialist_id": spec_id,
+        "session_type": "Video Call",
+        "date": "Tomorrow",
+        "time": "10:00 AM",
+        "reason": "Test video call"
+    })
+    assert res.status_code == 200
+    booking_id = res.json()["booking_id"]
+
+    # 2. Specialist logs in and manages the call state
+    spec_client = get_auth_client("specialist@mindmate.com", "specialist123")
+    
+    # Check initial call state is 0
+    res = spec_client.get(f"/api/bookings/{booking_id}/call-state")
+    assert res.status_code == 200
+    assert res.json()["is_calling"] == 0
+    
+    # Set call state to 1 (calling)
+    res = spec_client.put(f"/api/bookings/{booking_id}/call-state", json={"is_calling": 1})
+    assert res.status_code == 200
+    assert res.json()["is_calling"] == 1
+    
+    # Verify call status via client (student)
+    res = user_client.get(f"/api/bookings/{booking_id}/call-state")
+    assert res.status_code == 200
+    assert res.json()["is_calling"] == 1
+    assert res.json()["partner_name"] == "Dr. Sarah Johnson"
+    
+    # Set call state back to 0 (idle)
+    res = spec_client.put(f"/api/bookings/{booking_id}/call-state", json={"is_calling": 0})
+    assert res.status_code == 200
+
+
+def test_google_auth_and_specialist_workflow():
+    client = TestClient(app)
+    
+    # 1. Test Google login (mock token registration)
+    res = client.post("/api/auth/google", json={"credential": "mock:newgooglespec@mindmate.com"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["success"] is True
+    assert data["user_type"] == "user" # New Google signups are clients by default
+    assert data["email"] == "newgooglespec@mindmate.com"
+    
+    # 2. Test Specialist Signup Workflow
+    signup_payload = {
+        "email": "candidate_specialist@mindmate.com",
+        "password": "password123",
+        "action": "signup",
+        "user_type": "specialist",
+        "specialist_details": "License No: LIC-777 | Spec: Counseling | Exp: 8 yrs"
+    }
+    res = client.post("/api/auth", json=signup_payload)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["success"] is True
+    assert data["user_type"] == "user" # Down-graded to normal user role initially
+    assert data["specialist_status"] == "pending" # Status set to pending verification
+    
+    # Check session mapping
+    session_res = client.get("/api/session")
+    assert session_res.status_code == 200
+    session_data = session_res.json()
+    assert session_data["user_type"] == "user"
+    assert session_data["specialist_status"] == "pending"
+    
+    # 3. Admin retrieves specialist requests
+    admin_client = get_auth_client("admin@mindmate.com", "admin123")
+    res = admin_client.get("/api/admin/specialist-requests")
+    assert res.status_code == 200
+    reqs = res.json()
+    
+    # Find our candidate
+    candidate = next((r for r in reqs if r["email"] == "candidate_specialist@mindmate.com"), None)
+    assert candidate is not None
+    assert "LIC-777" in candidate["specialist_details"]
+    
+    # 4. Admin approves the candidate
+    res = admin_client.post(f"/api/admin/specialist-requests/{candidate['id']}/approve")
+    assert res.status_code == 200
+    assert res.json()["success"] is True
+    
+    # 5. Check if the user status is upgraded on next session check
+    # We login as the candidate to refresh their session type
+    res = client.post("/api/auth", json={
+        "email": "candidate_specialist@mindmate.com",
+        "password": "password123",
+        "action": "login"
+    })
+    assert res.status_code == 200
+    login_data = res.json()
+    assert login_data["user_type"] == "specialist" # Upgraded to specialist!
+    assert login_data["specialist_status"] == "approved"

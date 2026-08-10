@@ -219,7 +219,7 @@
                             </div>
                         </div>
                         <div style="display:flex; gap:var(--space-sm);">
-                            <a href="video-call.html" class="btn btn-outline btn-sm">Start Video</a>
+                            <a href="video-call.html" id="startVideoBtn" class="btn btn-outline btn-sm" style="display: none;">Start Video</a>
                             <button class="btn btn-outline btn-sm" onclick="clearRoom()">Clear</button>
                         </div>
                     </div>
@@ -301,6 +301,14 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
             activeBookingId = parseInt(params.get('id') || '1');
+
+            if (getUserType() === 'specialist') {
+                const btn = document.getElementById('startVideoBtn');
+                if (btn) {
+                    btn.style.display = 'inline-block';
+                    btn.href = `video-call.html?id=${activeBookingId}&role=specialist`;
+                }
+            }
 
             await loadBookingDetails();
             loadChatMessages();
