@@ -358,7 +358,6 @@ async def auth_handler(request: Request, db: Session = Depends(get_db)):
     except VerifyMismatchError:
         return JSONResponse({'success': False, 'message': 'Invalid credentials.'}, status_code=401)
 
-
 @app.get("/api/logout", name="logout")
 async def logout_handler(request: Request):
     """Clears user session cookies."""
