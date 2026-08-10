@@ -363,7 +363,7 @@ Your primary role is to listen actively, validate user emotions, and offer const
 
 CRITICAL GUIDELINES:
 1. EXCLUSIVE MENTAL HEALTH FOCUS: You are exclusively a mental health, emotional support, and self-care companion. Do not answer questions that are unrelated to emotional support, self-care, academic pressure, coping, stress, relationships, or mental wellness (such as general knowledge, coding, math, history, or pop culture). If the user asks an unrelated question, politely decline and redirect them back to wellness and mental health topics.
-2. LANGUAGE DEFAULT & MULTI-LINGUAL SUPPORT: By default, you must respond strictly in standard English. Do not use Hinglish or any other language unless the user explicitly starts the conversation in that language (e.g. they write in Bengali, Hindi, or Hinglish) or explicitly requests you to speak in a specific language. If the user writes in standard English, you must respond strictly in standard English. Match their chosen language naturally when a switch is triggered.
+2. LANGUAGE DEFAULT & MULTI-LINGUAL SUPPORT: By default, you must respond strictly in standard English. Do not use Hinglish or any other language unless the user starts the conversation in that language (e.g. they write in Bengali, Hindi, or Hinglish) OR they explicitly instruct/request you to speak in a specific language (e.g. 'reply in Bengali'). In those cases, you must immediately switch and respond in the requested language. Never override a user's language request.
 3. ABSOLUTELY NO MARKDOWN STYLING: Your response text must be plain text only. Do not use any markdown formatting characters. Never use double asterisks (**), italics, headers (#), backticks, or raw bullet lists (* or -). If you need to make lists, use plain numbering (e.g., '1.', '2.') and use simple double newlines (\\n\\n) to separate paragraphs.
 4. Tone & Context: Speak in a warm, welcoming, friendly, and non-judgmental tone. Incorporate information from the provided RAG Context (coping tips, helpline numbers) naturally, without copy-pasting it word-for-word.
 5. Distress/Crisis Check: Assess the user's emotion and risk level. If they show signs of severe crisis (abuse, self-harm, grief, self-destructive behavior), immediately prioritize providing emergency numbers (112, AASRA: 9820466567, iCall: 9152987821) in your response.
@@ -472,3 +472,122 @@ def generate_thread_title(first_message: str, api_key: str = MISTRAL_API_KEY) ->
     except Exception as e:
         print(f"[WARNING] Title generation error: {e}")
         return "New Chat"
+
+
+# ==============================================================================
+# 🤖 STREAMING GENERATION & CLASSIFICATION HELPERS
+# ==============================================================================
+
+async def get_mistral_chat_stream(
+    user_message: str,
+    chat_history: List[Dict[str, str]],
+    context_chunks: List[str],
+    api_key: str = MISTRAL_API_KEY
+):
+    """
+    Yields chunks of text response from Mistral Large in real-time.
+    """
+    if not api_key:
+        yield "Hello! I am MindMate. Currently, my Mistral API Key is missing. Please add it to your configuration."
+        return
+
+    url = "https://api.mistral.ai/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+
+    # 1. Format context
+    context_text = "\n---\n".join(context_chunks) if context_chunks else "No relevant context found."
+
+    # 2. System prompt
+    system_prompt = f"""You are MindMate, a warm, professional, and empathetic mental wellness chatbot companion for Indian students.
+Your primary role is to listen actively, validate user emotions, and offer constructive coping tips.
+
+CRITICAL GUIDELINES:
+1. EXCLUSIVE MENTAL HEALTH FOCUS: You are exclusively a mental health, emotional support, and self-care companion. Do not answer questions that are unrelated to emotional support, self-care, academic pressure, coping, stress, relationships, or mental wellness (such as general knowledge, coding, math, history, or pop culture). If the user asks an unrelated question, politely decline and redirect them back to wellness and mental health topics.
+2. LANGUAGE DEFAULT & MULTI-LINGUAL SUPPORT: By default, you must respond strictly in standard English. Do not use Hinglish or any other language unless the user starts the conversation in that language (e.g. they write in Bengali, Hindi, or Hinglish) OR they explicitly instruct/request you to speak in a specific language (e.g. 'reply in Bengali'). In those cases, you must immediately switch and respond in the requested language. Never override a user's language request.
+3. ABSOLUTELY NO MARKDOWN STYLING: Your response text must be plain text only. Do not use any markdown formatting characters. Never use double asterisks (**), italics, headers (#), backticks, or raw bullet lists (* or -). If you need to make lists, use plain numbering (e.g., '1.', '2.') and use simple double newlines (\\n\\n) to separate paragraphs.
+4. Tone & Context: Speak in a warm, welcoming, friendly, and non-judgmental tone. Incorporate information from the provided RAG Context (coping tips, helpline numbers) naturally, without copy-pasting it word-for-word.
+5. Distress/Crisis Check: Assess the user's emotion and risk level. If they show signs of severe crisis (abuse, self-harm, grief, self-destructive behavior), immediately prioritize providing emergency numbers (112, AASRA: 9820466567, iCall: 9152987821) in your response.
+6. Memory: Adapt to the conversation history to maintain context flow.
+
+RAG CONTEXT DATABASE:
+{context_text}
+"""
+
+    messages = [{"role": "system", "content": system_prompt}]
+    for turn in chat_history:
+        role = "user" if turn["sender"] == "user" else "assistant"
+        messages.append({"role": role, "content": turn["message"]})
+    messages.append({"role": "user", "content": user_message})
+
+    payload = {
+        "model": MISTRAL_LLM_MODEL,
+        "messages": messages,
+        "stream": True
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            async with client.stream("POST", url, json=payload, headers=headers) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if not line:
+                        continue
+                    if line.startswith("data: "):
+                        data_str = line[6:].strip()
+                        if data_str == "[DONE]":
+                            break
+                        try:
+                            data_json = json.loads(data_str)
+                            content = data_json["choices"][0]["delta"].get("content", "")
+                            if content:
+                                yield content
+                        except Exception:
+                            pass
+    except Exception as e:
+        print(f"[ERROR] Mistral Streaming error: {e}")
+        yield "I am having trouble connecting to my service. How can I help you?"
+
+
+def classify_message(user_message: str, api_key: str = MISTRAL_API_KEY) -> Dict[str, Any]:
+    """
+    Runs a fast classification query to evaluate user's emotion and risk level.
+    """
+    if not api_key:
+        return {"emotion": "chitchat", "risk": "NORMAL", "confidence": "100%"}
+
+    url = "https://api.mistral.ai/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+
+    system_prompt = """You are an emotion and risk assessment assistant. Categorize the user's query into emotion, risk, and confidence metrics.
+You MUST respond with a valid JSON object. Do not add any markdown formatting or extra text outside this JSON object:
+{
+  "emotion": "Categorize user's query: 'happy', 'sad', 'critical', 'chitchat', or 'out_of_context'.",
+  "risk": "Categorize risk level: 'NORMAL', 'LOW', 'MODERATE', 'HIGH', or 'CRITICAL'.",
+  "confidence": "Your classification confidence percentage string (e.g., '95%')."
+}
+"""
+    payload = {
+        "model": MISTRAL_LLM_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message}
+        ],
+        "response_format": {"type": "json_object"}
+    }
+
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            response = client.post(url, json=payload, headers=headers)
+            response.raise_for_status()
+            res_data = response.json()
+            content_str = res_data["choices"][0]["message"]["content"]
+            return json.loads(content_str)
+    except Exception as e:
+        print(f"[WARNING] Classification error: {e}")
+        return {"emotion": "chitchat", "risk": "NORMAL", "confidence": "80%"}

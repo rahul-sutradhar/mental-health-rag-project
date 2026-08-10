@@ -876,23 +876,107 @@
             showTyping();
 
             try {
-                const reply = await callChatAPI(text, activeThreadId);
-                hideTyping();
-                const replyTs = new Date().toISOString();
-                
-                renderMessage(reply.text, 'assistant', replyTs, reply.emotion, reply.risk, reply.confidence);
-                
-                // If thread ID was created on server side
-                if (reply.thread_id && reply.thread_id !== activeThreadId) {
-                    activeThreadId = reply.thread_id;
-                    fetchThreads();
-                } else if (reply.thread_title) {
-                    // Update thread title in sidebar UI if renamed dynamically
-                    const titleEl = document.getElementById(`titleText-${activeThreadId}`);
-                    if (titleEl) titleEl.textContent = reply.thread_title;
-                    // Update internal array
-                    const tIdx = threadsList.findIndex(t => t.id === activeThreadId);
-                    if (tIdx > -1) threadsList[tIdx].title = reply.thread_title;
+                const response = await fetch(API_BASE + '/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User-Id': localStorage.getItem('user_id')
+                    },
+                    body: JSON.stringify({ 
+                        message: text,
+                        thread_id: activeThreadId
+                    })
+                });
+
+                if (!response.ok) {
+                    hideTyping();
+                    throw new Error("Chat request failed");
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let textContent = "";
+                let metadataContent = "";
+                let isMetadataStarted = false;
+                let isBubbleCreated = false;
+
+                let bubbleEl = null;
+                let textEl = null;
+                let metaEl = null;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    
+                    if (isMetadataStarted) {
+                        metadataContent += chunk;
+                    } else {
+                        const metaIndex = chunk.indexOf("[METADATA]");
+                        if (metaIndex !== -1) {
+                            textContent += chunk.slice(0, metaIndex);
+                            metadataContent += chunk.slice(metaIndex + "[METADATA]".length);
+                            isMetadataStarted = true;
+                        } else {
+                            textContent += chunk;
+                        }
+                    }
+
+                    // Hide typing and create bubble ONLY when the first text token is received!
+                    if (textContent && !isBubbleCreated) {
+                        hideTyping();
+                        bubbleEl = createAssistantMessageBubble();
+                        textEl = bubbleEl.querySelector('.message-text');
+                        metaEl = bubbleEl.querySelector('.message-metadata');
+                        isBubbleCreated = true;
+                    }
+
+                    // Render only the text content in real-time
+                    if (isBubbleCreated) {
+                        textEl.innerHTML = escapeHtml(textContent.trim());
+                        const viewport = document.getElementById('chatMessages');
+                        viewport.scrollTop = viewport.scrollHeight;
+                    }
+                }
+
+                // Fallback: If loop finished but bubble was never created
+                if (!isBubbleCreated) {
+                    hideTyping();
+                    bubbleEl = createAssistantMessageBubble();
+                    textEl = bubbleEl.querySelector('.message-text');
+                    metaEl = bubbleEl.querySelector('.message-metadata');
+                }
+
+                // After the stream completes, parse the fully assembled metadata
+                if (metadataContent) {
+                    try {
+                        const metadata = JSON.parse(metadataContent.trim());
+                        
+                        // Render metadata detection
+                        let riskColor = "var(--color-primary-dark)";
+                        if (metadata.risk === "HIGH" || metadata.risk === "CRITICAL") riskColor = "var(--color-error)";
+                        else if (metadata.risk === "MODERATE" || metadata.risk === "LOW") riskColor = "var(--color-accent-dark, #b8860b)";
+
+                        metaEl.style.color = riskColor;
+                        metaEl.innerHTML = `Detected: ${metadata.emotion.toUpperCase()} | Risk: ${metadata.risk} (${metadata.confidence || 'N/A'})`;
+                        metaEl.style.display = 'block';
+
+                        // If thread ID was created on server side
+                        if (metadata.thread_id && metadata.thread_id !== activeThreadId) {
+                            activeThreadId = metadata.thread_id;
+                            fetchThreads();
+                        } else if (metadata.thread_title) {
+                            // Update thread title in sidebar UI if renamed dynamically
+                            const titleEl = document.getElementById(`titleText-${activeThreadId}`);
+                            if (titleEl) titleEl.textContent = metadata.thread_title;
+                            // Update internal array
+                            const tIdx = threadsList.findIndex(t => t.id === activeThreadId);
+                            if (tIdx > -1) threadsList[tIdx].title = metadata.thread_title;
+                        }
+                    } catch (e) {
+                        console.error("Error parsing metadata payload:", e, metadataContent);
+                    }
                 }
             } catch (err) {
                 hideTyping();
@@ -903,33 +987,22 @@
             }
         }
 
-        async function callChatAPI(userMessage, threadId) {
-            const response = await fetch(API_BASE + '/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-User-Id': localStorage.getItem('user_id')
-                },
-                body: JSON.stringify({ 
-                    message: userMessage,
-                    thread_id: threadId
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Chat request failed');
-            }
-
-            return {
-                text: data.response || "I'm here with you. Tell me more.",
-                emotion: data.emotion || null,
-                risk: data.risk || null,
-                confidence: data.confidence || null,
-                thread_id: data.thread_id || null,
-                thread_title: data.thread_title || null
-            };
+        function createAssistantMessageBubble() {
+            const mList = document.getElementById('messagesList');
+            const viewport = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'message';
+            
+            div.innerHTML = `
+                <div class="message-avatar" style="background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🤖</div>
+                <div class="message-content">
+                    <div class="message-text"></div>
+                    <div class="message-metadata" style="display:none; font-size: 0.75rem; opacity: 0.75; margin-top: 6px; border-top: 1px dashed rgba(0,0,0,0.1); padding-top:4px; font-weight:600;"></div>
+                    <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>`;
+            mList.appendChild(div);
+            viewport.scrollTop = viewport.scrollHeight;
+            return div;
         }
 
         function getFallbackResponse(msg) {

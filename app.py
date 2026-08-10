@@ -14,8 +14,9 @@ This module replaces Flask with FastAPI, providing:
 import os
 import datetime
 from typing import Optional
+import json
 from fastapi import FastAPI, Request, Form, Depends, HTTPException, status
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -190,96 +191,97 @@ def render(request: Request, template_name: str, context: Optional[dict] = None)
 # 📂 WEB PAGE ROUTES (Served as HTML)
 # ==============================================================================
 
-@app.get("/", name="index")
-@app.get("/index.html", name="index")
-async def index_page(request: Request):
-    return render(request, "index.html")
+if os.path.exists("templates"):
+    @app.get("/", name="index")
+    @app.get("/index.html", name="index")
+    async def index_page(request: Request):
+        return render(request, "index.html")
 
-@app.get("/about.html", name="about")
-async def about_page(request: Request):
-    return render(request, "about.html")
+    @app.get("/about.html", name="about")
+    async def about_page(request: Request):
+        return render(request, "about.html")
 
-@app.get("/login.html", name="login_page")
-async def login_page(request: Request):
-    return render(request, "login.html")
+    @app.get("/login.html", name="login_page")
+    async def login_page(request: Request):
+        return render(request, "login.html")
 
-@app.get("/choose-support.html", name="choose_support")
-async def choose_support_page(request: Request):
-    if "user_id" not in request.session:
-        return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
-    return render(request, "choose-support.html")
+    @app.get("/choose-support.html", name="choose_support")
+    async def choose_support_page(request: Request):
+        if "user_id" not in request.session:
+            return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
+        return render(request, "choose-support.html")
 
-@app.get("/ai-chat.html", name="ai_chat")
-async def ai_chat_page(request: Request):
-    if "user_id" not in request.session:
-        return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
-    return render(request, "ai-chat.html")
+    @app.get("/ai-chat.html", name="ai_chat")
+    async def ai_chat_page(request: Request):
+        if "user_id" not in request.session:
+            return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
+        return render(request, "ai-chat.html")
 
-@app.get("/specialists.html", name="specialists")
-async def specialists_page(request: Request):
-    return render(request, "specialists.html")
+    @app.get("/specialists.html", name="specialists")
+    async def specialists_page(request: Request):
+        return render(request, "specialists.html")
 
-@app.get("/assessment.html", name="assessment")
-async def assessment_page(request: Request):
-    return render(request, "assessment.html")
+    @app.get("/assessment.html", name="assessment")
+    async def assessment_page(request: Request):
+        return render(request, "assessment.html")
 
-@app.get("/specialist-dashboard.html", name="specialist_dash")
-async def specialist_dashboard_page(request: Request):
-    if "user_id" not in request.session:
-        return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
-    return render(request, "specialist-dashboard.html")
+    @app.get("/specialist-dashboard.html", name="specialist_dash")
+    async def specialist_dashboard_page(request: Request):
+        if "user_id" not in request.session:
+            return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
+        return render(request, "specialist-dashboard.html")
 
-@app.get("/dashboard.html", name="dashboard")
-async def dashboard_page(request: Request):
-    if "user_id" not in request.session:
-        return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
-    return render(request, "dashboard.html")
+    @app.get("/dashboard.html", name="dashboard")
+    async def dashboard_page(request: Request):
+        if "user_id" not in request.session:
+            return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
+        return render(request, "dashboard.html")
 
-@app.get("/store.html", name="store")
-async def store_page(request: Request):
-    return render(request, "store.html")
+    @app.get("/store.html", name="store")
+    async def store_page(request: Request):
+        return render(request, "store.html")
 
-@app.get("/booking.html", name="booking")
-async def booking_page(request: Request):
-    if "user_id" not in request.session:
-        return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
-    return render(request, "booking.html")
+    @app.get("/booking.html", name="booking")
+    async def booking_page(request: Request):
+        if "user_id" not in request.session:
+            return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
+        return render(request, "booking.html")
 
-@app.get("/chat-room.html", name="chat_room")
-async def chat_room_page(request: Request):
-    if "user_id" not in request.session:
-        return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
-    return render(request, "chat-room.html")
+    @app.get("/chat-room.html", name="chat_room")
+    async def chat_room_page(request: Request):
+        if "user_id" not in request.session:
+            return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
+        return render(request, "chat-room.html")
 
-@app.get("/specialist-profile.html", name="specialist_profile")
-async def specialist_profile_page(request: Request):
-    return render(request, "specialist-profile.html")
+    @app.get("/specialist-profile.html", name="specialist_profile")
+    async def specialist_profile_page(request: Request):
+        return render(request, "specialist-profile.html")
 
-@app.get("/video-call.html", name="video_call")
-async def video_call_page(request: Request):
-    if "user_id" not in request.session:
-        return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
-    return render(request, "video-call.html")
+    @app.get("/video-call.html", name="video_call")
+    async def video_call_page(request: Request):
+        if "user_id" not in request.session:
+            return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
+        return render(request, "video-call.html")
 
-@app.get("/contact.html", name="contact")
-async def contact_page(request: Request):
-    return render(request, "contact.html")
+    @app.get("/contact.html", name="contact")
+    async def contact_page(request: Request):
+        return render(request, "contact.html")
 
-@app.get("/faq.html", name="faq")
-async def faq_page(request: Request):
-    return render(request, "faq.html")
+    @app.get("/faq.html", name="faq")
+    async def faq_page(request: Request):
+        return render(request, "faq.html")
 
-@app.get("/privacy.html", name="privacy")
-async def privacy_page(request: Request):
-    return render(request, "privacy.html")
+    @app.get("/privacy.html", name="privacy")
+    async def privacy_page(request: Request):
+        return render(request, "privacy.html")
 
-@app.get("/terms.html", name="terms")
-async def terms_page(request: Request):
-    return render(request, "terms.html")
+    @app.get("/terms.html", name="terms")
+    async def terms_page(request: Request):
+        return render(request, "terms.html")
 
-@app.get("/404.html", name="not_found_page")
-async def not_found_page(request: Request):
-    return render(request, "404.html")
+    @app.get("/404.html", name="not_found_page")
+    async def not_found_page(request: Request):
+        return render(request, "404.html")
 
 
 # ==============================================================================
@@ -469,8 +471,8 @@ async def get_thread_history(thread_id: int, request: Request, db: Session = Dep
 async def chat_handler(request: Request, db: Session = Depends(get_db)):
     """
     RAG chat processor: fetches message context (Vector Search -> Reranker),
-    assembles chat memory from DB, calls Mistral Large, logs interactions,
-    and dynamically re-titles the thread on the first turn.
+    assembles chat memory from DB, and streams the Mistral Large response
+    token-by-token. Logs interactions and updates thread titles dynamically.
     """
     user_id = get_user_id(request)
     data = await request.json()
@@ -507,61 +509,66 @@ async def chat_handler(request: Request, db: Session = Depends(get_db)):
     # 3. Retrieve relevant context chunks using RAG (Vector Similarity + Reranking)
     context_chunks = []
     if vector_store and vector_store.documents:
-        # Step 3.1: Vector similarity search (fetch top 10 candidates)
         top_matches = vector_store.similarity_search(user_input, k=10)
         candidate_chunks = [match[0] for match in top_matches]
-        
-        # Step 3.2: Mistral Reranker (select top 3 from the 10 candidates)
         context_chunks = bot.rerank_documents(query=user_input, documents=candidate_chunks, k=3)
         
-    # 4. Generate response using Mistral LLM (structured JSON mode)
-    bot_result = bot.get_mistral_chat_response(user_input, chat_history, context_chunks)
-    
-    bot_reply = bot_result.get("response", "I'm here to listen. Tell me more.")
-    emotion = bot_result.get("emotion", "sad")
-    risk_level = bot_result.get("risk", "NORMAL")
-    confidence = bot_result.get("confidence", "75%")
-    
-    # 5. Save interactions to database
-    try:
-        user_msg_db = ChatMessage(thread_id=thread_id, sender='user', message=user_input)
-        bot_msg_db = ChatMessage(
-            thread_id=thread_id, 
-            sender='bot', 
-            message=bot_reply, 
-            emotion=emotion, 
-            risk_level=risk_level
-        )
-        db.add(user_msg_db)
-        db.add(bot_msg_db)
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        print(f"⚠️ Error saving messages to database: {e}")
-        
-    # 6. Dynamically update thread title if this was the first user message
-    title_updated = False
-    new_title = thread.title
-    total_messages = db.query(ChatMessage).filter(ChatMessage.thread_id == thread_id).count()
-    
-    if total_messages <= 2: # User message + Bot message = 2 messages
-        new_title = bot.generate_thread_title(user_input)
-        try:
-            thread.title = new_title
-            db.commit()
-            title_updated = True
-        except Exception as e:
-            db.rollback()
-            print(f"⚠️ Error updating thread title: {e}")
+    async def event_generator():
+        # A. Stream response tokens in real-time
+        full_reply = []
+        async for chunk in bot.get_mistral_chat_stream(user_input, chat_history, context_chunks):
+            full_reply.append(chunk)
+            yield chunk
             
-    return {
-        'response': bot_reply,
-        'emotion': emotion,
-        'risk': risk_level,
-        'confidence': confidence,
-        'thread_id': thread_id,
-        'thread_title': new_title if title_updated else None
-    }
+        full_reply_text = "".join(full_reply)
+        
+        # B. Rapidly classify emotion & risk
+        classification = bot.classify_message(user_input)
+        emotion = classification.get("emotion", "sad")
+        risk_level = classification.get("risk", "NORMAL")
+        confidence = classification.get("confidence", "75%")
+        
+        # C. Save interaction to database (using a dedicated session to prevent async race conditions)
+        new_title = thread.title
+        total_messages = 0
+        try:
+            db_session = SessionLocal()
+            total_messages = db_session.query(ChatMessage).filter(ChatMessage.thread_id == thread_id).count()
+            
+            user_msg_db = ChatMessage(thread_id=thread_id, sender='user', message=user_input)
+            bot_msg_db = ChatMessage(
+                thread_id=thread_id, 
+                sender='bot', 
+                message=full_reply_text, 
+                emotion=emotion, 
+                risk_level=risk_level
+            )
+            db_session.add(user_msg_db)
+            db_session.add(bot_msg_db)
+            
+            # D. Dynamically update thread title if this was the first user message
+            if total_messages == 0:
+                new_title = bot.generate_thread_title(user_input)
+                t_db = db_session.query(ChatThread).filter(ChatThread.id == thread_id).first()
+                if t_db:
+                    t_db.title = new_title
+                    
+            db_session.commit()
+            db_session.close()
+        except Exception as e:
+            print(f"⚠️ Error saving messages to database: {e}")
+            
+        # E. Yield the metadata payload at the very end
+        metadata = {
+            "emotion": emotion,
+            "risk": risk_level,
+            "confidence": confidence,
+            "thread_id": thread_id,
+            "thread_title": new_title if total_messages == 0 else None
+        }
+        yield f"\n[METADATA] {json.dumps(metadata)}"
+
+    return StreamingResponse(event_generator(), media_type="text/plain")
 
 
 # ==============================================================================
