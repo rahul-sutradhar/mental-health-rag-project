@@ -2,6 +2,12 @@
 
 > A state-of-the-art mental wellness platform for students. Connects users with verified mental health specialists and a production-grade **AI Companion (MindMate)** powered by **FastAPI + Mistral AI (LLM & Embeddings & Reranker) + standard RAG + Argon2 + SQLite/Supabase PostgreSQL**.
 
+<p align="center">
+  <a href="https://rahul-sutradhar.github.io/mental-health-rag-project/">
+    <img src="https://img.shields.io/badge/Live%20Demo-Visit%20Platform-brightgreen?style=for-the-badge&logo=github&logoColor=white" alt="Live Demo" />
+  </a>
+</p>
+
 ---
 
 ## 🌟 Core Features
