@@ -21,8 +21,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey, DateTime, desc
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, declarative_base
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
@@ -64,8 +63,9 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    user_type = Column(String, nullable=False) # 'user' or 'specialist'
+    user_type = Column(String, nullable=False) # 'user', 'specialist', 'admin', 'master_admin'
     tokens = Column(Integer, default=100)      # Welcome tokens bonus
+    full_name = Column(String, nullable=True)
 
 class ChatThread(Base):
     """ChatGPT-like chat threads belonging to a user."""
@@ -86,8 +86,79 @@ class ChatMessage(Base):
     risk_level = Column(String, nullable=True) # Risk evaluation
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
+class SpecialistBooking(Base):
+    """Specialist booking details."""
+    __tablename__ = "specialist_bookings"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    specialist_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+    session_type = Column(String, nullable=False) # 'Text Chat' or 'Video Call'
+    date = Column(String, nullable=False)
+    time = Column(String, nullable=False)
+    status = Column(String, default="pending") # 'pending', 'approved', 'assigned', 'completed'
+    reason = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class SpecialistMessage(Base):
+    """Messages exchanged between a user and specialist inside a booking thread."""
+    __tablename__ = "specialist_messages"
+    id = Column(Integer, primary_key=True, index=True)
+    booking_id = Column(Integer, ForeignKey("specialist_bookings.id", ondelete="CASCADE"), nullable=False)
+    sender_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    message = Column(Text, nullable=False)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
 # Create database tables
 Base.metadata.create_all(bind=engine)
+
+from sqlalchemy import text
+def upgrade_db_schema():
+    # If using sqlite, check if full_name column exists and add it if missing
+    db = SessionLocal()
+    try:
+        db.execute(text("SELECT full_name FROM users LIMIT 1"))
+    except Exception:
+        db.rollback()
+        try:
+            print("Upgrading database schema: adding full_name to users...")
+            db.execute(text("ALTER TABLE users ADD COLUMN full_name VARCHAR DEFAULT ''"))
+            db.commit()
+        except Exception as e:
+            print(f"⚠️ Error upgrading database schema: {e}")
+            db.rollback()
+    finally:
+        db.close()
+
+def seed_default_users():
+    db = SessionLocal()
+    try:
+        default_accounts = [
+            {"email": "user@mindmate.com", "password": "user123", "user_type": "user", "full_name": "Normal User"},
+            {"email": "specialist@mindmate.com", "password": "specialist123", "user_type": "specialist", "full_name": "Dr. Sarah Johnson"},
+            {"email": "admin@mindmate.com", "password": "admin123", "user_type": "admin", "full_name": "App Admin"},
+            {"email": "masteradmin@mindmate.com", "password": "master123", "user_type": "master_admin", "full_name": "Master Admin"}
+        ]
+        for acc in default_accounts:
+            existing = db.query(User).filter(User.email == acc["email"]).first()
+            if not existing:
+                hashed_pw = ph.hash(acc["password"])
+                user = User(
+                    email=acc["email"], 
+                    password=hashed_pw, 
+                    user_type=acc["user_type"], 
+                    full_name=acc["full_name"],
+                    tokens=100
+                )
+                db.add(user)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"⚠️ Error seeding users: {e}")
+    finally:
+        db.close()
+
+from contextlib import asynccontextmanager
 
 # Database Session Dependency
 def get_db():
@@ -97,12 +168,23 @@ def get_db():
     finally:
         db.close()
 
+# Global vector store instance for RAG
+vector_store = None
+
+@asynccontextmanager
+async def lifespan(app_instance: FastAPI):
+    """Builds or loads the RAG vector index on startup."""
+    global vector_store
+    vector_store = bot.initialize_rag()
+    upgrade_db_schema()
+    seed_default_users()
+    yield
 
 # ==============================================================================
 # 🚀 FASTAPI APP & INTERFACE CONFIGURATIONS
 # ==============================================================================
 
-app = FastAPI(title="MindMate AI — Full Stack Wellness Companion")
+app = FastAPI(title="MindMate AI — Full Stack Wellness Companion", lifespan=lifespan)
 
 # Enable Cross-Origin Resource Sharing (CORS)
 from fastapi.middleware.cors import CORSMiddleware
@@ -141,16 +223,6 @@ def get_user_id(request: Request) -> int:
 
 # Password Hasher (Argon2)
 ph = PasswordHasher()
-
-# Global vector store instance for RAG
-vector_store = None
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Builds or loads the RAG vector index on startup."""
-    global vector_store
-    vector_store = bot.initialize_rag()
 
 
 # ==============================================================================
@@ -229,7 +301,25 @@ if os.path.exists("templates"):
     async def specialist_dashboard_page(request: Request):
         if "user_id" not in request.session:
             return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
+        if request.session.get("user_type") != "specialist":
+            return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
         return render(request, "specialist-dashboard.html")
+
+    @app.get("/specialist-console.html", name="specialist_console")
+    async def specialist_console_page(request: Request):
+        if "user_id" not in request.session:
+            return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
+        if request.session.get("user_type") != "specialist":
+            return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
+        return render(request, "specialist-console.html")
+
+    @app.get("/admin-dashboard.html", name="admin_dashboard")
+    async def admin_dashboard_page(request: Request):
+        if "user_id" not in request.session:
+            return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
+        if request.session.get("user_type") not in ["admin", "master_admin"]:
+            return RedirectResponse(url="/login.html", status_code=status.HTTP_303_SEE_OTHER)
+        return render(request, "admin-dashboard.html")
 
     @app.get("/dashboard.html", name="dashboard")
     async def dashboard_page(request: Request):
@@ -312,7 +402,12 @@ async def auth_handler(request: Request, db: Session = Depends(get_db)):
         try:
             # Secure password hashing with Argon2
             hashed_pw = ph.hash(password)
-            new_user = User(email=email, password=hashed_pw, user_type=user_type)
+            new_user = User(
+                email=email, 
+                password=hashed_pw, 
+                user_type=user_type,
+                full_name=email.split('@')[0].capitalize()
+            )
             db.add(new_user)
             db.commit()
             db.refresh(new_user)
@@ -322,14 +417,21 @@ async def auth_handler(request: Request, db: Session = Depends(get_db)):
             request.session['email'] = new_user.email
             request.session['user_type'] = new_user.user_type
 
-            redirect_url = "specialist-dashboard.html" if user_type == "specialist" else "choose-support.html"
+            if user_type == "specialist":
+                redirect_url = "specialist-console.html"
+            elif user_type in ["admin", "master_admin"]:
+                redirect_url = "admin-dashboard.html"
+            else:
+                redirect_url = "choose-support.html"
+
             return {
                 'success': True, 
                 'message': 'Account created successfully!', 
                 'redirect': redirect_url,
                 'user_id': new_user.id,
                 'email': new_user.email,
-                'tokens': new_user.tokens
+                'tokens': new_user.tokens,
+                'user_type': new_user.user_type
             }
         except Exception as e:
             db.rollback()
@@ -349,14 +451,21 @@ async def auth_handler(request: Request, db: Session = Depends(get_db)):
         request.session['email'] = user.email
         request.session['user_type'] = user.user_type
 
-        redirect_url = "specialist-dashboard.html" if user.user_type == "specialist" else "choose-support.html"
+        if user.user_type == "specialist":
+            redirect_url = "specialist-console.html"
+        elif user.user_type in ["admin", "master_admin"]:
+            redirect_url = "admin-dashboard.html"
+        else:
+            redirect_url = "choose-support.html"
+
         return {
             'success': True, 
             'message': 'Logged in successfully!', 
             'redirect': redirect_url,
             'user_id': user.id,
             'email': user.email,
-            'tokens': user.tokens
+            'tokens': user.tokens,
+            'user_type': user.user_type
         }
     except VerifyMismatchError:
         return JSONResponse({'success': False, 'message': 'Invalid credentials.'}, status_code=401)
@@ -369,16 +478,23 @@ async def logout_handler(request: Request):
 
 
 @app.get("/api/session")
-async def session_handler(request: Request):
+async def session_handler(request: Request, db: Session = Depends(get_db)):
     """Retrieves current user login state details."""
     if 'user_id' not in request.session:
         return {'logged_in': False}
         
+    user_id = request.session.get('user_id')
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return {'logged_in': False}
+        
     return {
         'logged_in': True,
-        'user_id': request.session.get('user_id'),
-        'email': request.session.get('email'),
-        'user_type': request.session.get('user_type')
+        'user_id': user.id,
+        'email': user.email,
+        'user_type': user.user_type,
+        'full_name': user.full_name or user.email.split("@")[0].capitalize(),
+        'tokens': user.tokens
     }
 
 
@@ -568,7 +684,461 @@ async def chat_handler(request: Request, db: Session = Depends(get_db)):
         }
         yield f"\n[METADATA] {json.dumps(metadata)}"
 
-    return StreamingResponse(event_generator(), media_type="text/plain")
+    # ==============================================================================
+# 🩺 SPECIALIST & BOOKING API ENDPOINTS
+# ==============================================================================
+
+@app.get("/api/specialists")
+async def get_specialists(db: Session = Depends(get_db)):
+    """Fetch all users marked as specialists."""
+    specialists = db.query(User).filter(User.user_type == "specialist").all()
+    return [
+        {
+            "id": s.id,
+            "email": s.email,
+            "full_name": s.full_name or s.email.split("@")[0].capitalize(),
+            "tokens": s.tokens
+        } for s in specialists
+    ]
+
+@app.post("/api/user/bookings")
+async def create_user_booking(request: Request, db: Session = Depends(get_db)):
+    """Deduct tokens and book a chat/video session with a specialist."""
+    user_id = get_user_id(request)
+    data = await request.json()
+    
+    specialist_id = data.get("specialist_id")
+    session_type = data.get("session_type", "Text Chat")
+    date = data.get("date")
+    time = data.get("time")
+    reason = data.get("reason", "")
+    notes = data.get("notes", "")
+    
+    cost = 100 if session_type == "Video Call" else 50
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or user.tokens < cost:
+        raise HTTPException(status_code=400, detail="Insufficient tokens")
+        
+    user.tokens -= cost
+    
+    booking = SpecialistBooking(
+        user_id=user_id,
+        specialist_id=specialist_id,
+        session_type=session_type,
+        date=date,
+        time=time,
+        status="assigned" if specialist_id else "pending",
+        reason=reason,
+        notes=notes
+    )
+    db.add(booking)
+    db.commit()
+    db.refresh(booking)
+    return {"success": True, "booking_id": booking.id, "remaining_tokens": user.tokens}
+
+@app.get("/api/user/bookings")
+async def get_user_bookings(request: Request, db: Session = Depends(get_db)):
+    """Fetch all upcoming and past bookings for the logged-in user."""
+    user_id = get_user_id(request)
+    bookings = db.query(SpecialistBooking).filter(SpecialistBooking.user_id == user_id).order_by(desc(SpecialistBooking.created_at)).all()
+    
+    results = []
+    for b in bookings:
+        spec = db.query(User).filter(User.id == b.specialist_id).first() if b.specialist_id else None
+        results.append({
+            "id": b.id,
+            "specialist_id": b.specialist_id,
+            "specialist_name": spec.full_name if spec else "Unassigned",
+            "session_type": b.session_type,
+            "date": b.date,
+            "time": b.time,
+            "status": b.status,
+            "reason": b.reason,
+            "notes": b.notes
+        })
+    return results
+
+@app.get("/api/specialist/bookings")
+async def get_specialist_bookings(request: Request, db: Session = Depends(get_db)):
+    """Fetch all bookings assigned to the logged-in specialist."""
+    user_id = get_user_id(request)
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or user.user_type != "specialist":
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    bookings = db.query(SpecialistBooking).filter(SpecialistBooking.specialist_id == user_id).order_by(desc(SpecialistBooking.created_at)).all()
+    
+    results = []
+    for b in bookings:
+        client = db.query(User).filter(User.id == b.user_id).first()
+        results.append({
+            "id": b.id,
+            "client_email": client.email if client else "Unknown Client",
+            "client_name": client.full_name if client else "Unknown Client",
+            "session_type": b.session_type,
+            "date": b.date,
+            "time": b.time,
+            "status": b.status,
+            "reason": b.reason,
+            "notes": b.notes
+        })
+    return results
+
+@app.put("/api/specialist/bookings/{booking_id}/status")
+async def update_booking_status(booking_id: int, request: Request, db: Session = Depends(get_db)):
+    """Let the specialist complete or approve a booking session."""
+    user_id = get_user_id(request)
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or user.user_type != "specialist":
+         raise HTTPException(status_code=403, detail="Forbidden")
+         
+    booking = db.query(SpecialistBooking).filter(SpecialistBooking.id == booking_id, SpecialistBooking.specialist_id == user_id).first()
+    if not booking:
+         raise HTTPException(status_code=404, detail="Booking not found")
+         
+    data = await request.json()
+    status_val = data.get("status")
+    if status_val not in ["approved", "completed", "cancelled"]:
+         raise HTTPException(status_code=400, detail="Invalid status")
+         
+    booking.status = status_val
+    db.commit()
+    return {"success": True, "status": booking.status}
+
+@app.get("/api/bookings/{booking_id}/messages")
+async def get_booking_messages(booking_id: int, request: Request, db: Session = Depends(get_db)):
+    """Retrieve chat history for a specialist booking thread."""
+    user_id = get_user_id(request)
+    booking = db.query(SpecialistBooking).filter(SpecialistBooking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+        
+    current_user = db.query(User).filter(User.id == user_id).first()
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+        
+    if user_id != booking.user_id and user_id != booking.specialist_id and current_user.user_type not in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    messages = db.query(SpecialistMessage).filter(SpecialistMessage.booking_id == booking_id).order_by(SpecialistMessage.timestamp).all()
+    
+    return [
+        {
+            "id": m.id,
+            "sender_id": m.sender_id,
+            "message": m.message,
+            "timestamp": m.timestamp.isoformat()
+        } for m in messages
+    ]
+
+@app.post("/api/bookings/{booking_id}/messages")
+async def send_booking_message(booking_id: int, request: Request, db: Session = Depends(get_db)):
+    """Post a message inside a booking thread."""
+    user_id = get_user_id(request)
+    booking = db.query(SpecialistBooking).filter(SpecialistBooking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+        
+    current_user = db.query(User).filter(User.id == user_id).first()
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+        
+    if user_id != booking.user_id and user_id != booking.specialist_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    data = await request.json()
+    msg_text = data.get("message", "").strip()
+    if not msg_text:
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+        
+    new_msg = SpecialistMessage(
+        booking_id=booking_id,
+        sender_id=user_id,
+        message=msg_text
+    )
+    db.add(new_msg)
+    db.commit()
+    db.refresh(new_msg)
+    return {
+        "id": new_msg.id,
+        "sender_id": new_msg.sender_id,
+        "message": new_msg.message,
+        "timestamp": new_msg.timestamp.isoformat()
+    }
+
+
+# ==============================================================================
+# 👑 ADMIN PANEL & ROLE CONTROLS API ENDPOINTS
+# ==============================================================================
+
+def verify_admin_action(actor: User, target_user: User, action_type: str, new_role: str = None) -> bool:
+    """
+    Validates role permissions for admin actions:
+    action_type can be: 'delete', 'update_role', 'reset_password'
+    """
+    # No admin or master admin can delete themselves or change/demote their own role
+    if actor.id == target_user.id and action_type in ["delete", "update_role"]:
+        return False
+
+    # Master Admin rules:
+    if actor.user_type == "master_admin":
+        # Master Admin can change anything except demoting/modifying another master admin
+        if target_user.user_type == "master_admin" and actor.id != target_user.id:
+            return False
+        return True
+
+    # Admin rules:
+    if actor.user_type == "admin":
+        # Cannot demote or change Master Admin (read-only)
+        if target_user.user_type == "master_admin":
+            return False
+        
+        if action_type == "update_role":
+            # Admin can convert user <-> specialist
+            # Cannot promote anyone to admin or master admin
+            if new_role in ["admin", "master_admin"]:
+                return False
+            # Cannot demote other Admin or Self
+            if target_user.user_type in ["admin", "master_admin"]:
+                return False
+            return True
+            
+        elif action_type == "reset_password":
+            # Admin can reset User, Specialist, and Self
+            if target_user.user_type == "admin" and actor.id != target_user.id:
+                return False # Cannot reset other admin
+            return True
+            
+        elif action_type == "delete":
+            # Admin cannot delete other Admins, Self, or Master Admins
+            if target_user.user_type in ["admin", "master_admin"]:
+                return False
+            return True
+            
+    return False
+
+@app.get("/api/admin/users")
+async def admin_get_users(request: Request, db: Session = Depends(get_db)):
+    """Fetch all users registered on the platform."""
+    user_id = get_user_id(request)
+    actor = db.query(User).filter(User.id == user_id).first()
+    if not actor or actor.user_type not in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    users = db.query(User).all()
+    return [
+        {
+            "id": u.id,
+            "email": u.email,
+            "user_type": u.user_type,
+            "full_name": u.full_name or u.email.split("@")[0].capitalize(),
+            "tokens": u.tokens
+        } for u in users
+    ]
+
+@app.post("/api/admin/users")
+async def admin_create_user(request: Request, db: Session = Depends(get_db)):
+    """Admin-only creation of User, Specialist, or Admin (within rules)."""
+    user_id = get_user_id(request)
+    actor = db.query(User).filter(User.id == user_id).first()
+    if not actor or actor.user_type not in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    data = await request.json()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "").strip()
+    user_type = data.get("user_type", "user").strip()
+    full_name = data.get("full_name", "").strip()
+    tokens = int(data.get("tokens", 100))
+    
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Missing email or password")
+        
+    # Rule validation: Admin cannot create an admin/master_admin
+    if actor.user_type == "admin" and user_type in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Admins cannot create admin accounts")
+        
+    existing = db.query(User).filter(User.email == email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="User already exists")
+        
+    hashed_pw = ph.hash(password)
+    new_user = User(
+        email=email,
+        password=hashed_pw,
+        user_type=user_type,
+        full_name=full_name or email.split("@")[0].capitalize(),
+        tokens=tokens
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return {"success": True, "user_id": new_user.id}
+
+@app.put("/api/admin/users/{target_id}")
+async def admin_update_user(target_id: int, request: Request, db: Session = Depends(get_db)):
+    """Admin-only updates of roles, tokens, and names."""
+    user_id = get_user_id(request)
+    actor = db.query(User).filter(User.id == user_id).first()
+    if not actor or actor.user_type not in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    target = db.query(User).filter(User.id == target_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    data = await request.json()
+    new_role = data.get("user_type")
+    new_full_name = data.get("full_name")
+    new_tokens = data.get("tokens")
+    
+    # Check role update permission
+    if new_role and new_role != target.user_type:
+        if not verify_admin_action(actor, target, "update_role", new_role):
+            raise HTTPException(status_code=403, detail="Permission denied to change role")
+        target.user_type = new_role
+        
+    # Token assignment & profile updates
+    if new_tokens is not None:
+        if actor.user_type == "admin" and target.user_type in ["admin", "master_admin"]:
+             raise HTTPException(status_code=403, detail="Cannot modify other admin tokens")
+        target.tokens = int(new_tokens)
+        
+    if new_full_name is not None:
+        if actor.user_type == "admin" and target.user_type in ["admin", "master_admin"]:
+             raise HTTPException(status_code=403, detail="Cannot modify other admin profile")
+        target.full_name = new_full_name
+        
+    db.commit()
+    return {"success": True}
+
+@app.post("/api/admin/users/{target_id}/reset-password")
+async def admin_reset_password(target_id: int, request: Request, db: Session = Depends(get_db)):
+    """Reset user password, respecting security boundaries."""
+    user_id = get_user_id(request)
+    actor = db.query(User).filter(User.id == user_id).first()
+    if not actor or actor.user_type not in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    target = db.query(User).filter(User.id == target_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    data = await request.json()
+    new_password = data.get("password")
+    if not new_password or len(new_password.strip()) < 5:
+        raise HTTPException(status_code=400, detail="Password too short")
+        
+    if not verify_admin_action(actor, target, "reset_password"):
+        raise HTTPException(status_code=403, detail="Permission denied to reset password")
+        
+    target.password = ph.hash(new_password.strip())
+    db.commit()
+    return {"success": True}
+
+@app.delete("/api/admin/users/{target_id}")
+async def admin_delete_user(target_id: int, request: Request, db: Session = Depends(get_db)):
+    """Delete a user account, respecting admin boundaries."""
+    user_id = get_user_id(request)
+    actor = db.query(User).filter(User.id == user_id).first()
+    if not actor or actor.user_type not in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    target = db.query(User).filter(User.id == target_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if not verify_admin_action(actor, target, "delete"):
+        raise HTTPException(status_code=403, detail="Permission denied to delete user")
+        
+    db.delete(target)
+    db.commit()
+    return {"success": True}
+
+@app.get("/api/admin/bookings")
+async def admin_get_bookings(request: Request, db: Session = Depends(get_db)):
+    """Fetch all bookings for appointment and video call assignment control."""
+    user_id = get_user_id(request)
+    actor = db.query(User).filter(User.id == user_id).first()
+    if not actor or actor.user_type not in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    bookings = db.query(SpecialistBooking).order_by(desc(SpecialistBooking.created_at)).all()
+    results = []
+    for b in bookings:
+        client = db.query(User).filter(User.id == b.user_id).first()
+        spec = db.query(User).filter(User.id == b.specialist_id).first() if b.specialist_id else None
+        results.append({
+            "id": b.id,
+            "user_id": b.user_id,
+            "client_email": client.email if client else "Unknown",
+            "client_name": client.full_name if client else "Unknown",
+            "specialist_id": b.specialist_id,
+            "specialist_name": spec.full_name if spec else "Unassigned",
+            "session_type": b.session_type,
+            "date": b.date,
+            "time": b.time,
+            "status": b.status,
+            "reason": b.reason,
+            "notes": b.notes
+        })
+    return results
+
+@app.put("/api/admin/bookings/{booking_id}")
+async def admin_update_booking(booking_id: int, request: Request, db: Session = Depends(get_db)):
+    """Admin-only reassignment and adjustment of bookings (video call control)."""
+    user_id = get_user_id(request)
+    actor = db.query(User).filter(User.id == user_id).first()
+    if not actor or actor.user_type not in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    booking = db.query(SpecialistBooking).filter(SpecialistBooking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+        
+    data = await request.json()
+    new_specialist_id = data.get("specialist_id")
+    new_status = data.get("status")
+    new_date = data.get("date")
+    new_time = data.get("time")
+    
+    if new_specialist_id is not None:
+        if new_specialist_id == 0 or new_specialist_id is None:
+            booking.specialist_id = None
+            booking.status = "pending"
+        else:
+            spec = db.query(User).filter(User.id == new_specialist_id, User.user_type == "specialist").first()
+            if not spec:
+                raise HTTPException(status_code=400, detail="Invalid specialist ID")
+            booking.specialist_id = new_specialist_id
+            booking.status = "assigned"
+            
+    if new_status:
+        booking.status = new_status
+    if new_date:
+        booking.date = new_date
+    if new_time:
+        booking.time = new_time
+        
+    db.commit()
+    return {"success": True}
+
+@app.delete("/api/admin/bookings/{booking_id}")
+async def admin_delete_booking(booking_id: int, request: Request, db: Session = Depends(get_db)):
+    """Admin-only deletion of a booking."""
+    user_id = get_user_id(request)
+    actor = db.query(User).filter(User.id == user_id).first()
+    if not actor or actor.user_type not in ["admin", "master_admin"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+        
+    booking = db.query(SpecialistBooking).filter(SpecialistBooking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+        
+    db.delete(booking)
+    db.commit()
+    return {"success": True}
 
 
 # ==============================================================================

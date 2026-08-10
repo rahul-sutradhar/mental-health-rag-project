@@ -337,19 +337,31 @@
         let secondsLeft = 30 * 60;
         let timerRef = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
-            const id = params.get('id') || '1';
-            const specialist = specialistMap[id] || specialistMap[1];
+            const bookingId = parseInt(params.get('id') || '1');
+            const role = params.get('role') || localStorage.getItem('userType') || 'user';
 
-            document.getElementById('videoName').textContent = specialist.name;
-            document.getElementById('videoMainName').textContent = specialist.name;
-            document.getElementById('detailName').textContent = specialist.name;
-            document.getElementById('videoAvatar').src = specialist.avatar;
-            document.getElementById('videoMainAvatar').src = specialist.avatar;
+            let booking = null;
+            try {
+                const endpoint = role === 'specialist' ? '/api/specialist/bookings' : '/api/user/bookings';
+                const response = await fetch(API_BASE + endpoint);
+                if (response.ok) {
+                    const bookings = await response.json();
+                    booking = bookings.find(b => b.id === bookingId);
+                }
+            } catch (e) {
+                console.error("Error loading session:", e);
+            }
 
-            if (params.get('date')) document.getElementById('detailDate').textContent = params.get('date');
-            if (params.get('time')) document.getElementById('detailTime').textContent = params.get('time');
+            if (booking) {
+                const partnerName = role === 'specialist' ? booking.client_name : booking.specialist_name;
+                document.getElementById('videoName').textContent = partnerName;
+                document.getElementById('videoMainName').textContent = partnerName;
+                document.getElementById('detailName').textContent = partnerName;
+                document.getElementById('detailDate').textContent = booking.date;
+                document.getElementById('detailTime').textContent = booking.time;
+            }
 
             updateTimer();
             timerRef = setInterval(() => {

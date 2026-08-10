@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Specialist Console - Serenity Mindspace</title>
+    <meta name="description" content="Secure portal for licensed specialists to consult with clients.">
+    <meta name="theme-color" content="#7A9B76">
+
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <script src="static/js/utils.js" defer></script>
+
+    <style>
+        body {
+            padding-top: 80px;
+        }
+
+        .console-container {
+            min-height: calc(100vh - 80px);
+            background: linear-gradient(180deg, var(--bg-primary) 0%, rgba(164,196,160,0.05) 100%);
+            padding: var(--space-xl) 0 var(--space-3xl);
+        }
+
+        .console-layout {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: var(--space-xl);
+            height: 720px;
+            background: var(--bg-elevated);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--color-sand);
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .console-sidebar {
+            border-right: 1px solid var(--color-sand);
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-elevated);
+        }
+
+        .sidebar-header {
+            padding: var(--space-lg);
+            border-bottom: 1px solid var(--color-sand);
+        }
+
+        .sidebar-title {
+            font-family: var(--font-display);
+            font-size: var(--text-lg);
+            font-weight: 600;
+            color: var(--color-primary-dark);
+            margin: 0 0 var(--space-xs) 0;
+        }
+
+        .session-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-md);
+        }
+
+        .session-item {
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            margin-bottom: var(--space-sm);
+        }
+
+        .session-item:hover {
+            background: rgba(122, 155, 118, 0.05);
+            border-color: var(--color-sand);
+        }
+
+        .session-item.active {
+            background: rgba(122, 155, 118, 0.12);
+            border-color: var(--color-primary-light);
+        }
+
+        .session-client {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: var(--text-base);
+            margin-bottom: 4px;
+        }
+
+        .session-meta {
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .session-status {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            padding: 2px 6px;
+            border-radius: var(--radius-sm);
+        }
+
+        .status-assigned { background: #E0F2FE; color: #0369A1; }
+        .status-pending { background: #FEF3C7; color: #B45309; }
+        .status-completed { background: #DCFCE7; color: #15803D; }
+
+        /* Main Workspace */
+        .console-workspace {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-elevated);
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-tertiary);
+            padding: var(--space-3xl);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: var(--space-md);
+            opacity: 0.6;
+        }
+
+        .workspace-header {
+            padding: var(--space-lg);
+            border-bottom: 1px solid var(--color-sand);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .workspace-client-info h2 {
+            font-family: var(--font-display);
+            font-size: var(--text-2xl);
+            margin: 0;
+        }
+
+        .workspace-body {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            overflow: hidden;
+        }
+
+        /* Chat Component */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            border-right: 1px solid var(--color-sand);
+            background: rgba(250, 247, 242, 0.4);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-lg);
+        }
+
+        .message-bubble {
+            margin-bottom: var(--space-md);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message-bubble.incoming {
+            align-items: flex-start;
+        }
+
+        .message-bubble.outgoing {
+            align-items: flex-end;
+        }
+
+        .bubble-text {
+            max-width: 70%;
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-lg);
+            font-size: var(--text-sm);
+            line-height: 1.5;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .message-bubble.incoming .bubble-text {
+            background: white;
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-bubble.outgoing .bubble-text {
+            background: var(--color-primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bubble-time {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        .chat-input-area {
+            padding: var(--space-lg);
+            background: var(--bg-elevated);
+            border-top: 1px solid var(--color-sand);
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: var(--space-md);
+        }
+
+        .chat-input {
+            flex: 1;
+            border-radius: var(--radius-full);
+        }
+
+        /* Client Profile Side Panel */
+        .details-panel {
+            padding: var(--space-lg);
+            overflow-y: auto;
+            background: var(--bg-elevated);
+        }
+
+        .details-panel-title {
+            font-family: var(--font-display);
+            font-size: var(--text-sm);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin: 0 0 var(--space-md) 0;
+            border-bottom: 1px solid var(--color-sand);
+            padding-bottom: 4px;
+        }
+
+        .details-section {
+            margin-bottom: var(--space-xl);
+        }
+
+        .details-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: var(--text-sm);
+            margin-bottom: var(--space-sm);
+        }
+
+        .details-row span {
+            color: var(--text-secondary);
+        }
+
+        .details-row strong {
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 900px) {
+            .console-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .console-sidebar {
+                border-right: none;
+                border-bottom: 1px solid var(--color-sand);
+                max-height: 280px;
+            }
+            .workspace-body {
+                grid-template-columns: 1fr;
+            }
+            .details-panel {
+                border-top: 1px solid var(--color-sand);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header" id="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                </svg>
+                <span>Serenity Mindspace</span>
+            </a>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="specialist-console.html" class="nav-link active">Console</a></li>
+                <li><a href="specialist-dashboard.html" class="nav-link">Stats</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span data-dark-icon>🌙</span></button>
+                <button class="btn btn-ghost" data-action="logout">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <div class="console-container">
+        <div class="container">
+            <div class="console-layout">
+                <!-- Sidebar (Sessions list) -->
+                <aside class="console-sidebar">
+                    <div class="sidebar-header">
+                        <h3 class="sidebar-title">Client Sessions</h3>
+                        <p style="color: var(--text-secondary); font-size: var(--text-xs); margin: 0;">Select a session to consult</p>
+                    </div>
+                    <div class="session-list" id="sessionList">
+                        <div class="empty-state" style="padding: var(--space-xl);">
+                            <p style="font-size:var(--text-sm);">Loading sessions...</p>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Workspace -->
+                <main class="console-workspace" id="consoleWorkspace">
+                    <div class="empty-state">
+                        <div class="empty-icon">🩺</div>
+                        <h3>Welcome to the Specialist Console</h3>
+                        <p style="text-align: center; max-width: 400px; margin-top: var(--space-sm);">
+                            Please select a client session from the sidebar to launch chat, review logs, and manage video calls.
+                        </p>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-bottom" style="margin-top:0; border-top:none; text-align:center;">
+                <p>&copy; Serenity Mindspace. Specialist Consultation Portal.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let bookings = [];
+        let activeBookingId = null;
+        let chatInterval = null;
+        let messagesLength = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSessions();
+            setInterval(loadSessions, 10000); // Reload list every 10 seconds
+        });
+
+        async function loadSessions() {
+            try {
+                const response = await fetch(API_BASE + '/api/specialist/bookings');
+                if (!response.ok) return;
+                
+                bookings = await response.json();
+                renderSessionsList();
+            } catch (error) {
+                console.error("Error loading sessions:", error);
+            }
+        }
+
+        function renderSessionsList() {
+            const container = document.getElementById('sessionList');
+            if (!container) return;
+
+            if (bookings.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:var(--space-xl); color:var(--text-tertiary); font-size:var(--text-sm);">
+                        No client sessions booked yet.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = bookings.map(b => `
+                <div class="session-item ${b.id === activeBookingId ? 'active' : ''}" onclick="selectSession(${b.id})">
+                    <div class="session-client">${b.client_name}</div>
+                    <div class="session-meta">
+                        <span>${b.session_type}</span>
+                        <span class="session-status status-${b.status}">${b.status}</span>
+                    </div>
+                    <div class="session-meta" style="margin-top:4px;">
+                        <span>${b.date} • ${b.time}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectSession(id) {
+            activeBookingId = id;
+            renderSessionsList();
+            const booking = bookings.find(b => b.id === id);
+            if (!booking) return;
+
+            const workspace = document.getElementById('consoleWorkspace');
+            workspace.innerHTML = `
+                <div class="workspace-header">
+                    <div class="workspace-client-info">
+                        <h2>${booking.client_name}</h2>
+                        <p style="color: var(--text-secondary); font-size: var(--text-xs); margin: 0;">
+                            ${booking.session_type} • Scheduled for ${booking.date} at ${booking.time}
+                        </p>
+                    </div>
+                    <div style="display:flex; gap:var(--space-md);">
+                        ${booking.session_type === 'Video Call' ? `
+                            <a href="video-call.html?id=${booking.id}&role=specialist" class="btn btn-primary btn-sm">Join Video Call</a>
+                        ` : ''}
+                        ${booking.status !== 'completed' ? `
+                            <button class="btn btn-outline btn-sm" onclick="completeSession(${booking.id})">Mark Completed</button>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="workspace-body">
+                    <!-- Chat Container -->
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div style="text-align:center; padding:var(--space-xl); color:var(--text-tertiary);">
+                                Loading chat history...
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <form class="chat-input-form" onsubmit="sendChatMessage(event, ${booking.id})">
+                                <input type="text" id="chatInput" class="form-input chat-input" placeholder="Type a message to your client...">
+                                <button type="submit" class="btn btn-primary">Send</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Client Profile side panel -->
+                    <aside class="details-panel">
+                        <div class="details-section">
+                            <div class="details-panel-title">Session Context</div>
+                            <div class="details-row">
+                                <span>Support Topic:</span>
+                            </div>
+                            <p style="font-size:var(--text-sm); line-height:1.4; color:var(--text-secondary); margin: 4px 0 var(--space-md) 0;">
+                                ${booking.reason || 'No topic specified.'}
+                            </p>
+                            <div class="details-row">
+                                <span>Additional Notes:</span>
+                            </div>
+                            <p style="font-size:var(--text-xs); line-height:1.4; color:var(--text-tertiary); margin:4px 0 0 0;">
+                                ${booking.notes || 'No notes provided by client.'}
+                            </p>
+                        </div>
+                        <div class="details-section">
+                            <div class="details-panel-title">Client Profile</div>
+                            <div class="details-row">
+                                <span>Email:</span>
+                                <strong>${booking.client_email}</strong>
+                            </div>
+                            <div class="details-row">
+                                <span>Account ID:</span>
+                                <strong>#${booking.id + 1000}</strong>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            `;
+
+            // Scroll chat to bottom & load chat history immediately
+            messagesLength = 0;
+            loadChatMessages(booking.id);
+
+            // Establish polling for chat messages
+            if (chatInterval) clearInterval(chatInterval);
+            chatInterval = setInterval(() => loadChatMessages(booking.id), 3000);
+        }
+
+        async function loadChatMessages(bookingId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/bookings/${bookingId}/messages`);
+                if (!response.ok) return;
+
+                const messages = await response.json();
+                if (messages.length === messagesLength) return; // Skip DOM update if no new messages
+
+                messagesLength = messages.length;
+                const container = document.getElementById('chatMessages');
+                if (!container) return;
+
+                const specialistUserId = parseInt(localStorage.getItem('user_id'));
+
+                if (messages.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center; padding:var(--space-2xl); color:var(--text-tertiary); font-size:var(--text-sm);">
+                            No messages in this session yet. Say hello to start the consultation.
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = messages.map(m => {
+                    const direction = m.sender_id === specialistUserId ? 'outgoing' : 'incoming';
+                    const time = new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return `
+                        <div class="message-bubble ${direction}">
+                            <div class="bubble-text">${escapeHtml(m.message)}</div>
+                            <div class="bubble-time">${time}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                container.scrollTop = container.scrollHeight;
+            } catch (error) {
+                console.error("Error fetching messages:", error);
+            }
+        }
+
+        async function sendChatMessage(event, bookingId) {
+            event.preventDefault();
+            const input = document.getElementById('chatInput');
+            if (!input) return;
+
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/bookings/${bookingId}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+
+                if (response.ok) {
+                    loadChatMessages(bookingId);
+                } else {
+                    showToast('Failed to send message', 'error');
+                }
+            } catch (error) {
+                console.error("Error sending message:", error);
+                showToast('Server error', 'error');
+            }
+        }
+
+        async function completeSession(bookingId) {
+            if (!confirm("Are you sure you want to mark this consultation as completed?")) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/specialist/bookings/${bookingId}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'completed' })
+                });
+
+                if (response.ok) {
+                    showToast('Session completed successfully', 'success');
+                    loadSessions();
+                    selectSession(bookingId);
+                } else {
+                    showToast('Failed to update status', 'error');
+                }
+            } catch (error) {
+                console.error("Error updating status:", error);
+            }
+        }
+    </script>
+</body>
+</html>

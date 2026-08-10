@@ -410,22 +410,42 @@
             loadUpcomingSessions();
         });
 
-        function loadUpcomingSessions() {
+        async function loadUpcomingSessions() {
             const container = document.getElementById('upcomingSessionsList');
-            if (!container || typeof getUpcomingBookings !== 'function') return;
+            if (!container) return;
 
-            const upcoming = getUpcomingBookings();
-            if (!upcoming.length) return;
+            try {
+                const response = await fetch(API_BASE + '/api/user/bookings');
+                if (!response.ok) return;
 
-            container.innerHTML = upcoming.slice(0, 3).map(b => `
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--space-md);border:1px solid var(--color-sand);border-radius:var(--radius-md);margin-bottom:var(--space-md);">
-                    <div>
-                        <div style="font-weight:600;font-family:var(--font-display);">${b.specialist || 'Specialist Session'}</div>
-                        <div style="font-size:var(--text-sm);color:var(--text-secondary);">${b.type || 'Chat'} • ${b.date || 'Scheduled'} ${b.time || ''}</div>
-                    </div>
-                    <a href="chat-room.html" class="btn btn-sm btn-primary">Join</a>
-                </div>
-            `).join('');
+                const bookings = await response.json();
+                const upcoming = bookings.filter(b => b.status === 'assigned' || b.status === 'approved' || b.status === 'pending');
+
+                if (!upcoming.length) {
+                    container.innerHTML = `
+                        <div style="text-align:center; padding:var(--space-md); color:var(--text-secondary); font-size:var(--text-sm);">
+                            No upcoming sessions scheduled.
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = upcoming.slice(0, 3).map(b => {
+                    const targetPage = b.session_type === 'Video Call' ? 'video-call.html' : 'chat-room.html';
+                    return `
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--space-md);border:1px solid var(--color-sand);border-radius:var(--radius-md);margin-bottom:var(--space-md);">
+                            <div>
+                                <div style="font-weight:600;font-family:var(--font-display);">${b.specialist_name}</div>
+                                <div style="font-size:var(--text-sm);color:var(--text-secondary);">${b.session_type} • ${b.date} ${b.time}</div>
+                                <div style="font-size:10px; color:var(--text-tertiary); margin-top:2px;">Status: ${b.status}</div>
+                            </div>
+                            <a href="${targetPage}?id=${b.id}" class="btn btn-sm btn-primary">Join</a>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Error loading upcoming sessions:", error);
+            }
         }
     </script>
 </body>

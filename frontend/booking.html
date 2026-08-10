@@ -1,5 +1,6 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +17,7 @@
             padding-top: 100px;
             padding-bottom: var(--space-4xl);
             min-height: 100vh;
-            background: linear-gradient(180deg, var(--bg-primary) 0%, rgba(164,196,160,0.05) 100%);
+            background: linear-gradient(180deg, var(--bg-primary) 0%, rgba(164, 196, 160, 0.05) 100%);
         }
 
         .booking-layout {
@@ -89,8 +90,8 @@
         }
 
         .payment-note {
-            background: rgba(232,196,104,0.12);
-            border: 1px solid rgba(232,196,104,0.3);
+            background: rgba(232, 196, 104, 0.12);
+            border: 1px solid rgba(232, 196, 104, 0.3);
             border-radius: var(--radius-md);
             padding: var(--space-lg);
             font-size: var(--text-sm);
@@ -119,12 +120,14 @@
         }
     </style>
 </head>
+
 <body>
     <header class="site-header" id="header">
         <nav class="nav-container">
             <a href="index.html" class="logo">
                 <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z"/>
+                    <path
+                        d="M50 10 C30 10 20 25 20 40 C20 55 30 65 40 75 C45 80 47 85 50 90 C53 85 55 80 60 75 C70 65 80 55 80 40 C80 25 70 10 50 10 Z M50 50 C40 50 35 45 35 40 C35 35 40 30 50 30 C60 30 65 35 65 40 C65 45 60 50 50 50 Z" />
                 </svg>
                 <span>Serenity Mindspace</span>
             </a>
@@ -137,10 +140,12 @@
             </ul>
 
             <div class="nav-actions">
-                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span data-dark-icon>🌙</span></button>
+                <button class="dark-mode-toggle" data-action="toggle-dark" title="Toggle dark mode"><span
+                        data-dark-icon>🌙</span></button>
                 <div class="token-display">
                     <svg class="token-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+                        <path
+                            d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
                     </svg>
                     <span id="bookingTokenCount" data-token-display>0</span> tokens
                 </div>
@@ -169,8 +174,10 @@
                     <div class="specialist-mini">
                         <img id="bookingAvatar" src="https://i.pravatar.cc/150?img=47" alt="Specialist">
                         <div>
-                            <h3 id="bookingSpecialistName" style="margin-bottom: var(--space-xs);">Dr. Sarah Johnson</h3>
-                            <p id="bookingSpecialistTitle" class="text-secondary" style="margin: 0;">Clinical Psychologist</p>
+                            <h3 id="bookingSpecialistName" style="margin-bottom: var(--space-xs);">Dr. Sarah Johnson
+                            </h3>
+                            <p id="bookingSpecialistTitle" class="text-secondary" style="margin: 0;">Clinical
+                                Psychologist</p>
                         </div>
                     </div>
 
@@ -205,16 +212,19 @@
 
                     <div style="margin-bottom: var(--space-xl);">
                         <label class="form-label" for="bookingReason">What would you like support with?</label>
-                        <textarea id="bookingReason" class="form-textarea" rows="4" placeholder="Share a little about what you'd like to discuss. This helps the specialist prepare."></textarea>
+                        <textarea id="bookingReason" class="form-textarea" rows="4"
+                            placeholder="Share a little about what you'd like to discuss. This helps the specialist prepare."></textarea>
                     </div>
 
                     <div style="margin-bottom: var(--space-xl);">
                         <label class="form-label" for="bookingNotes">Additional Notes (Optional)</label>
-                        <textarea id="bookingNotes" class="form-textarea" rows="3" placeholder="Anything else you'd like the specialist to know."></textarea>
+                        <textarea id="bookingNotes" class="form-textarea" rows="3"
+                            placeholder="Anything else you'd like the specialist to know."></textarea>
                     </div>
 
                     <div class="payment-note">
-                        <strong>Note:</strong> Tokens will be deducted only when you confirm this booking. You can reschedule later from your dashboard.
+                        <strong>Note:</strong> Tokens will be deducted only when you confirm this booking. You can
+                        reschedule later from your dashboard.
                     </div>
                 </div>
 
@@ -250,7 +260,8 @@
                         <strong><span id="summaryBalance" data-token-display>0</span> 💎</strong>
                     </div>
 
-                    <button class="btn btn-primary btn-full btn-lg" style="margin-top: var(--space-xl);" onclick="confirmBooking()">
+                    <button class="btn btn-primary btn-full btn-lg" style="margin-top: var(--space-xl);"
+                        onclick="confirmBooking()">
                         Confirm Booking
                     </button>
 
@@ -272,7 +283,8 @@
             <div class="modal-body">
                 <div class="card card-flat">
                     <p style="margin:0; text-align:center;">
-                        Your specialist will be ready at the scheduled time. You can view or manage this booking from your dashboard.
+                        Your specialist will be ready at the scheduled time. You can view or manage this booking from
+                        your dashboard.
                     </p>
                 </div>
             </div>
@@ -376,7 +388,7 @@
             updateSummary();
         });
 
-        function confirmBooking() {
+        async function confirmBooking() {
             const cost = getTypeCost(selectedType);
             const reason = document.getElementById("bookingReason").value.trim();
             const notes = document.getElementById("bookingNotes").value.trim();
@@ -386,32 +398,53 @@
                 return;
             }
 
-            if (typeof getTokens === "function" && typeof setTokens === "function") {
-                const currentTokens = getTokens();
-                if (currentTokens < cost) {
-                    showToast("You do not have enough tokens for this booking.", "error");
-                    return;
+            let dbSpecialistId = null;
+            try {
+                const specRes = await fetch(API_BASE + '/api/specialists');
+                const specs = await specRes.json();
+
+                const params = new URLSearchParams(window.location.search);
+                const urlId = params.get("id") || "1";
+
+                if (specs.length > 0) {
+                    const match = specs.find(s => s.id == urlId || s.email.includes('specialist'));
+                    dbSpecialistId = match ? match.id : specs[0].id;
                 }
-                setTokens(currentTokens - cost);
+            } catch (e) {
+                console.error("Error loading specialists:", e);
             }
 
-            if (typeof saveBooking === "function") {
-                const specialistName = document.getElementById("summaryName").textContent;
-                saveBooking({
-                    specialist: specialistName,
-                    type: getTypeLabel(selectedType),
-                    date: selectedDate,
-                    time: selectedTime,
-                    cost: cost,
-                    reason: reason,
-                    notes: notes
+            try {
+                const res = await fetch(API_BASE + '/api/user/bookings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        specialist_id: dbSpecialistId,
+                        session_type: getTypeLabel(selectedType),
+                        date: selectedDate,
+                        time: selectedTime,
+                        reason: reason,
+                        notes: notes
+                    })
                 });
-            }
 
-            updateSummary();
-            document.getElementById("bookingSuccessModal").style.display = "flex";
-            showToast("Booking confirmed successfully!", "success");
+                const data = await res.json();
+                if (res.ok) {
+                    if (data.remaining_tokens !== undefined) {
+                        setTokens(data.remaining_tokens);
+                    }
+                    updateSummary();
+                    document.getElementById("bookingSuccessModal").style.display = "flex";
+                    showToast("Booking confirmed successfully!", "success");
+                } else {
+                    showToast(data.detail || "Booking failed", "error");
+                }
+            } catch (error) {
+                console.error("Booking error:", error);
+                showToast("Server error", "error");
+            }
         }
     </script>
 </body>
+
 </html>

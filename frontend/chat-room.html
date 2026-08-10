@@ -294,24 +294,17 @@
             4: { name: "Dr. James Wilson", avatar: "https://i.pravatar.cc/150?img=27" }
         };
 
-        let roomHistory = [];
+        let activeBookingId = null;
+        let messagesLength = 0;
+        let chatInterval = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
-            const id = params.get('id') || '1';
-            const specialist = specialistMap[id] || specialistMap[1];
+            activeBookingId = parseInt(params.get('id') || '1');
 
-            document.getElementById('roomName').textContent = specialist.name;
-            document.getElementById('roomAvatar').src = specialist.avatar;
-            document.getElementById('sessionTypeInfo').textContent = params.get('type') || 'Text Chat';
-            document.getElementById('sessionDateInfo').textContent = params.get('date') || 'Tomorrow';
-            document.getElementById('sessionTimeInfo').textContent = params.get('time') || '5:00 PM';
-
-            const saved = localStorage.getItem(`chat_room_${id}`);
-            if (saved) {
-                roomHistory = JSON.parse(saved);
-                renderHistory();
-            }
+            await loadBookingDetails();
+            loadChatMessages();
+            chatInterval = setInterval(loadChatMessages, 3000);
 
             const input = document.getElementById('roomInput');
             input.addEventListener('keydown', (e) => {
@@ -322,116 +315,111 @@
             });
         });
 
-        function saveHistory() {
-            const params = new URLSearchParams(window.location.search);
-            const id = params.get('id') || '1';
-            localStorage.setItem(`chat_room_${id}`, JSON.stringify(roomHistory));
+        async function loadBookingDetails() {
+            try {
+                const response = await fetch(API_BASE + '/api/user/bookings');
+                if (!response.ok) return;
+
+                const bookings = await response.json();
+                const booking = bookings.find(b => b.id === activeBookingId);
+                if (booking) {
+                    document.getElementById('roomName').textContent = booking.specialist_name;
+                    document.getElementById('sessionTypeInfo').textContent = booking.session_type;
+                    document.getElementById('sessionDateInfo').textContent = booking.date;
+                    document.getElementById('sessionTimeInfo').textContent = booking.time;
+                    
+                    // Fallback avatar
+                    document.getElementById('roomAvatar').src = "https://i.pravatar.cc/150?img=47";
+                }
+            } catch (error) {
+                console.error("Error loading booking details:", error);
+            }
         }
 
-        function renderHistory() {
-            const box = document.getElementById('roomMessages');
-            box.innerHTML = '';
+        async function loadChatMessages() {
+            if (!activeBookingId) return;
+            try {
+                const response = await fetch(`${API_BASE}/api/bookings/${activeBookingId}/messages`);
+                if (!response.ok) return;
 
-            if (!roomHistory.length) {
-                box.innerHTML = `
-                    <div class="room-message">
-                        <img class="room-avatar" src="${document.getElementById('roomAvatar').src}" alt="Specialist" style="width:40px;height:40px;">
-                        <div class="room-bubble">
-                            Hello, welcome to your secure chat room. Take your time — what would you like to talk about today?
-                            <div class="room-time">Just now</div>
-                        </div>
-                    </div>
-                `;
-                return;
-            }
+                const messages = await response.json();
+                if (messages.length === messagesLength) return;
 
-            roomHistory.forEach(m => {
-                const div = document.createElement('div');
-                div.className = `room-message ${m.sender === 'user' ? 'user' : ''}`;
+                messagesLength = messages.length;
+                const box = document.getElementById('roomMessages');
+                if (!box) return;
 
-                if (m.sender === 'user') {
-                    div.innerHTML = `
-                        <div class="room-bubble">
-                            ${escapeHtml(m.text)}
-                            <div class="room-time">${m.time}</div>
-                        </div>
-                        <div class="room-avatar" style="width:40px;height:40px;background:var(--color-primary);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;">You</div>
-                    `;
-                } else {
-                    div.innerHTML = `
-                        <img class="room-avatar" src="${document.getElementById('roomAvatar').src}" alt="Specialist" style="width:40px;height:40px;">
-                        <div class="room-bubble">
-                            ${escapeHtml(m.text)}
-                            <div class="room-time">${m.time}</div>
+                const currentUserId = parseInt(localStorage.getItem('user_id'));
+
+                if (messages.length === 0) {
+                    box.innerHTML = `
+                        <div class="room-message">
+                            <img class="room-avatar" src="${document.getElementById('roomAvatar').src}" alt="Specialist" style="width:40px;height:40px;">
+                            <div class="room-bubble">
+                                Hello, welcome to your secure chat room. Take your time — what would you like to talk about today?
+                                <div class="room-time">Just now</div>
+                            </div>
                         </div>
                     `;
+                    return;
                 }
 
-                box.appendChild(div);
-            });
+                box.innerHTML = '';
+                messages.forEach(m => {
+                    const div = document.createElement('div');
+                    const isOutgoing = m.sender_id === currentUserId;
+                    div.className = `room-message ${isOutgoing ? 'user' : ''}`;
+                    const time = new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            box.scrollTop = box.scrollHeight;
+                    if (isOutgoing) {
+                        div.innerHTML = `
+                            <div class="room-bubble">
+                                ${escapeHtml(m.message)}
+                                <div class="room-time">${time}</div>
+                            </div>
+                            <div class="room-avatar" style="width:40px;height:40px;background:var(--color-primary);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;">You</div>
+                        `;
+                    } else {
+                        div.innerHTML = `
+                            <img class="room-avatar" src="${document.getElementById('roomAvatar').src}" alt="Specialist" style="width:40px;height:40px;">
+                            <div class="room-bubble">
+                                ${escapeHtml(m.message)}
+                                <div class="room-time">${time}</div>
+                            </div>
+                        `;
+                    }
+                    box.appendChild(div);
+                });
+
+                box.scrollTop = box.scrollHeight;
+            } catch (error) {
+                console.error("Error loading chat messages:", error);
+            }
         }
 
-        function sendRoomMessage() {
+        async function sendRoomMessage() {
             const input = document.getElementById('roomInput');
             const text = input.value.trim();
-            if (!text) return;
+            if (!text || !activeBookingId) return;
 
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            roomHistory.push({ sender: 'user', text, time });
-            saveHistory();
-            renderHistory();
             input.value = '';
 
-            showTyping();
+            try {
+                const response = await fetch(`${API_BASE}/api/bookings/${activeBookingId}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
 
-            setTimeout(() => {
-                hideTyping();
-                const reply = getRoomReply(text);
-                const replyTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                roomHistory.push({ sender: 'specialist', text: reply, time: replyTime });
-                saveHistory();
-                renderHistory();
-            }, 1000);
-        }
-
-        function showTyping() {
-            const box = document.getElementById('roomMessages');
-            const div = document.createElement('div');
-            div.id = 'roomTyping';
-            div.className = 'typing-row';
-            div.innerHTML = `
-                <img class="room-avatar" src="${document.getElementById('roomAvatar').src}" alt="Specialist" style="width:40px;height:40px;">
-                <div class="typing-bubble">
-                    <div class="typing-indicator">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                    </div>
-                </div>
-            `;
-            box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
-        }
-
-        function hideTyping() {
-            const t = document.getElementById('roomTyping');
-            if (t) t.remove();
-        }
-
-        function getRoomReply(text) {
-            const msg = text.toLowerCase();
-            if (msg.includes('overwhelmed') || msg.includes('stress')) {
-                return "Thank you for sharing that. Feeling overwhelmed can be exhausting. Let's slow down and focus on what feels most intense right now.";
+                if (response.ok) {
+                    loadChatMessages();
+                } else {
+                    showToast('Failed to send message', 'error');
+                }
+            } catch (error) {
+                console.error("Error sending message:", error);
+                showToast('Server error', 'error');
             }
-            if (msg.includes('anxiety')) {
-                return "I hear you. Anxiety can make even small things feel heavy. Can you tell me what situations have been triggering it most recently?";
-            }
-            if (msg.includes('relationship')) {
-                return "Relationships can bring up a lot of emotions. Would you like to talk about a recent situation or the general pattern you've been noticing?";
-            }
-            return "Thank you for opening up. I'm here with you, and we can go step by step. Tell me more whenever you're ready.";
         }
 
         function insertPrompt(text) {
@@ -440,10 +428,9 @@
         }
 
         function clearRoom() {
-            if (!confirm('Clear this chat room history?')) return;
-            roomHistory = [];
-            saveHistory();
-            renderHistory();
+            showToast('Chat history cleared from display only.', 'info');
+            const box = document.getElementById('roomMessages');
+            if (box) box.innerHTML = '';
         }
     </script>
 </body>
