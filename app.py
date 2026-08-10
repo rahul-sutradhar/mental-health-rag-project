@@ -196,6 +196,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/api/health")
+async def health_check():
+    """Simple health check endpoint to keep the Render backend awake."""
+    return {"status": "healthy", "timestamp": datetime.datetime.now(datetime.UTC).isoformat()}
+
+
 # Starlette Session Middleware (cookie-based login sessions fallback)
 # Generates a random session secret key if not set in .env
 SESSION_SECRET = os.getenv("SESSION_SECRET", os.urandom(24).hex())

@@ -58,6 +58,14 @@ def get_auth_client(email, password):
     return client
 
 
+def test_health_endpoint():
+    client = TestClient(app)
+    res = client.get("/api/health")
+    assert res.status_code == 200
+    assert res.json()["status"] == "healthy"
+    assert "timestamp" in res.json()
+
+
 def test_seeded_users():
     client = TestClient(app)
     # Verify login user
