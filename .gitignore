@@ -28,3 +28,10 @@ glove.6B/
 
 # Restructuring
 trash/
+
+# Pytest
+.pytest_cache/
+
+# OS/System files
+.DS_Store
+Thumbs.db
