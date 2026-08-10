@@ -16,7 +16,8 @@ mindmate.db
 .github/
 
 # Ignore decoupled static frontend files (hosted on GitHub Pages)
-frontend/
+frontend/*
+!frontend/faq.html
 static/
 templates/
 trash/

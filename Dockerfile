@@ -21,7 +21,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy only the necessary backend files for production execution
-COPY app.py bot.py responses.json rag_embeddings.pickle ./
+COPY app.py bot.py responses.json ./
+COPY frontend/faq.html ./frontend/faq.html
 
 # Expose the default port (Render overrides this via the PORT environment variable)
 EXPOSE 5000
