@@ -15,7 +15,7 @@ import os, sys
 import datetime
 from typing import Optional
 import json
-from fastapi import FastAPI, Request, Form, Depends, HTTPException, status
+from fastapi import FastAPI, Request, Form, Depends, HTTPException, status, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -1158,6 +1158,60 @@ async def admin_delete_booking(booking_id: int, request: Request, db: Session = 
     db.delete(booking)
     db.commit()
     return {"success": True}
+
+
+# ==============================================================================
+# 📹 WEBRTC VIDEO SIGNALING
+# ==============================================================================
+
+class VideoSignalingManager:
+    def __init__(self):
+        # Store active connections: booking_id -> {role: websocket}
+        self.active_calls = {}
+
+    async def connect(self, websocket: WebSocket, booking_id: int, role: str):
+        await websocket.accept()
+        if booking_id not in self.active_calls:
+            self.active_calls[booking_id] = {}
+        self.active_calls[booking_id][role] = websocket
+
+    def disconnect(self, booking_id: int, role: str):
+        if booking_id in self.active_calls:
+            if role in self.active_calls[booking_id]:
+                del self.active_calls[booking_id][role]
+            if not self.active_calls[booking_id]:
+                del self.active_calls[booking_id]
+
+    async def send_to_partner(self, message: str, booking_id: int, sender_role: str):
+        if booking_id in self.active_calls:
+            for role, ws in self.active_calls[booking_id].items():
+                if role != sender_role:
+                    await ws.send_text(message)
+
+video_manager = VideoSignalingManager()
+
+@app.websocket("/ws/video/{booking_id}/{role}")
+async def websocket_video_endpoint(websocket: WebSocket, booking_id: int, role: str):
+    await video_manager.connect(websocket, booking_id, role)
+    # Notify partner that a peer has joined
+    await video_manager.send_to_partner(
+        json.dumps({"type": "peer-joined", "role": role}),
+        booking_id,
+        role
+    )
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Forward SDP offer/answer or ICE candidate
+            await video_manager.send_to_partner(data, booking_id, role)
+    except WebSocketDisconnect:
+        video_manager.disconnect(booking_id, role)
+        # Notify partner that peer has left
+        await video_manager.send_to_partner(
+            json.dumps({"type": "peer-left", "role": role}),
+            booking_id,
+            role
+        )
 
 
 # ==============================================================================

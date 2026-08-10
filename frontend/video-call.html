@@ -109,6 +109,23 @@
             box-shadow: var(--shadow-lg);
             text-align: center;
             padding: var(--space-md);
+            overflow: hidden;
+        }
+
+        .video-main video, .video-self video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            display: none;
+        }
+
+        .video-placeholder {
+            z-index: 0;
+            position: relative;
         }
 
         .video-controls {
@@ -255,7 +272,8 @@
 
                     <div class="video-stage">
                         <div class="video-main" id="videoMain">
-                            <div>
+                            <video id="remoteVideo" autoplay playsinline></video>
+                            <div class="video-placeholder" id="remotePlaceholder">
                                 <img id="videoMainAvatar" class="video-main-avatar" src="https://i.pravatar.cc/150?img=47" alt="Specialist">
                                 <h2 id="videoMainName" style="color:white; margin-bottom: var(--space-sm);">Dr. Sarah Johnson</h2>
                                 <p style="opacity:0.8; margin:0;">Your session is live. Take a breath and begin whenever you're ready.</p>
@@ -263,7 +281,8 @@
                         </div>
 
                         <div class="video-self" id="videoSelf">
-                            <div>
+                            <video id="localVideo" autoplay muted playsinline></video>
+                            <div class="video-placeholder" id="localPlaceholder">
                                 <div style="font-size:1.5rem; margin-bottom: var(--space-xs);">🙂</div>
                                 <div style="font-size:var(--text-sm); opacity:0.85;">You</div>
                             </div>
@@ -337,10 +356,27 @@
         let secondsLeft = 30 * 60;
         let timerRef = null;
 
+        // WebRTC variables
+        let localStream = null;
+        let peerConnection = null;
+        let signalingSocket = null;
+        let bookingId = 1;
+        let role = 'user'; // 'user' or 'specialist'
+
+        const rtcConfig = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
         document.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
-            const bookingId = parseInt(params.get('id') || '1');
-            const role = params.get('role') || localStorage.getItem('userType') || 'user';
+            bookingId = parseInt(params.get('id') || '1');
+            role = params.get('role') || localStorage.getItem('userType') || 'user';
+            
+            // Normalize role mapping for websocket signaling
+            const signalRole = role === 'specialist' ? 'specialist' : 'client';
 
             let booking = null;
             try {
@@ -363,6 +399,7 @@
                 document.getElementById('detailTime').textContent = booking.time;
             }
 
+            // Start timer
             updateTimer();
             timerRef = setInterval(() => {
                 secondsLeft--;
@@ -372,7 +409,125 @@
                     endCall(true);
                 }
             }, 1000);
+
+            // Initialize local camera and WebRTC
+            try {
+                await initLocalVideo();
+                initSignaling(signalRole);
+            } catch (err) {
+                console.error("Failed to initialize video call media:", err);
+                showToast("Camera/Microphone access is required for real video calling.", "error");
+            }
         });
+
+        async function initLocalVideo() {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            
+            const localVideo = document.getElementById('localVideo');
+            localVideo.srcObject = localStream;
+            localVideo.style.display = 'block';
+            document.getElementById('localPlaceholder').style.display = 'none';
+        }
+
+        function initSignaling(signalRole) {
+            // Establish WebSocket connection
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            let hostStr = window.location.host;
+            if (API_BASE.startsWith('http')) {
+                const urlObj = new URL(API_BASE);
+                hostStr = urlObj.host;
+            }
+            const wsUrl = `${protocol}//${hostStr}/ws/video/${bookingId}/${signalRole}`;
+            
+            signalingSocket = new WebSocket(wsUrl);
+
+            signalingSocket.onopen = () => {
+                console.log("Signaling channel connected for role: " + signalRole);
+                setupPeerConnection(signalRole);
+            };
+
+            signalingSocket.onmessage = async (msg) => {
+                const data = JSON.parse(msg.data);
+                if (data.type === 'peer-joined') {
+                    console.log("Peer joined session. Role: " + data.role);
+                    // The specialist acts as the call initiator (caller)
+                    if (signalRole === 'specialist') {
+                        await startWebRTCCall();
+                    }
+                } else if (data.type === 'offer') {
+                    console.log("Received WebRTC Offer");
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                    const answer = await peerConnection.createAnswer();
+                    await peerConnection.setLocalDescription(answer);
+                    signalingSocket.send(JSON.stringify({ type: 'answer', answer }));
+                } else if (data.type === 'answer') {
+                    console.log("Received WebRTC Answer");
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                } else if (data.type === 'candidate') {
+                    console.log("Received WebRTC ICE Candidate");
+                    if (peerConnection) {
+                        try {
+                            await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                        } catch (e) {
+                            console.error("Error adding ICE candidate:", e);
+                        }
+                    }
+                } else if (data.type === 'peer-left') {
+                    console.log("Peer disconnected");
+                    handleRemotePeerDisconnect();
+                }
+            };
+
+            signalingSocket.onclose = () => {
+                console.log("Signaling channel disconnected.");
+            };
+        }
+
+        function setupPeerConnection(signalRole) {
+            peerConnection = new RTCPeerConnection(rtcConfig);
+
+            // Add local stream tracks to WebRTC
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+
+            // Handle remote video stream
+            peerConnection.ontrack = (event) => {
+                console.log("Received remote video track");
+                const remoteVideo = document.getElementById('remoteVideo');
+                remoteVideo.srcObject = event.streams[0];
+                remoteVideo.style.display = 'block';
+                document.getElementById('remotePlaceholder').style.display = 'none';
+            };
+
+            // Send ICE candidates to partner
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate && signalingSocket && signalingSocket.readyState === WebSocket.OPEN) {
+                    signalingSocket.send(JSON.stringify({
+                        type: 'candidate',
+                        candidate: event.candidate
+                    }));
+                }
+            };
+        }
+
+        async function startWebRTCCall() {
+            if (!peerConnection) return;
+            console.log("Initiating WebRTC offer creation...");
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            signalingSocket.send(JSON.stringify({ type: 'offer', offer }));
+        }
+
+        function handleRemotePeerDisconnect() {
+            const remoteVideo = document.getElementById('remoteVideo');
+            if (remoteVideo) {
+                remoteVideo.srcObject = null;
+                remoteVideo.style.display = 'none';
+            }
+            document.getElementById('remotePlaceholder').style.display = 'block';
+            showToast("Your session partner has left the call.", "info");
+        }
 
         function updateTimer() {
             const min = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
@@ -386,30 +541,36 @@
             btn.textContent = micOn ? '🎤' : '🔇';
             btn.classList.toggle('warn', !micOn);
             btn.classList.toggle('soft', micOn);
+
+            if (localStream) {
+                localStream.getAudioTracks().forEach(track => {
+                    track.enabled = micOn;
+                });
+            }
         }
 
         function toggleCam() {
             camOn = !camOn;
             const btn = document.getElementById('camBtn');
-            const self = document.getElementById('videoSelf');
+            const localVideo = document.getElementById('localVideo');
+            const placeholder = document.getElementById('localPlaceholder');
+            
             btn.textContent = camOn ? '📷' : '🚫';
             btn.classList.toggle('warn', !camOn);
             btn.classList.toggle('soft', camOn);
 
+            if (localStream) {
+                localStream.getVideoTracks().forEach(track => {
+                    track.enabled = camOn;
+                });
+            }
+
             if (camOn) {
-                self.innerHTML = `
-                    <div>
-                        <div style="font-size:1.5rem; margin-bottom: var(--space-xs);">🙂</div>
-                        <div style="font-size:var(--text-sm); opacity:0.85;">You</div>
-                    </div>
-                `;
+                localVideo.style.display = 'block';
+                placeholder.style.display = 'none';
             } else {
-                self.innerHTML = `
-                    <div>
-                        <div style="font-size:1.5rem; margin-bottom: var(--space-xs);">📷</div>
-                        <div style="font-size:var(--text-sm); opacity:0.85;">Camera Off</div>
-                    </div>
-                `;
+                localVideo.style.display = 'none';
+                placeholder.style.display = 'block';
             }
         }
 
@@ -431,12 +592,22 @@
                 }
             }
 
-            if (typeof showToast === 'function') {
-                showToast(autoEnd ? 'Session ended. Time is up.' : 'Call ended.', 'info');
+            // Cleanup WebRTC and local devices
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            if (peerConnection) {
+                peerConnection.close();
+            }
+            if (signalingSocket) {
+                signalingSocket.close();
             }
 
+            showToast(autoEnd ? 'Session ended. Time is up.' : 'Call ended.', 'info');
+
             setTimeout(() => {
-                window.location.href = "dashboard.html";
+                const redirectPage = role === 'specialist' ? "specialist-console.html" : "dashboard.html";
+                window.location.href = redirectPage;
             }, 600);
         }
     </script>

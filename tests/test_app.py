@@ -258,3 +258,32 @@ def test_booking_and_messaging():
     target_booking = next(b for b in updated_bookings if b["id"] == booking_id)
     assert target_booking["status"] == "completed"
     assert target_booking["date"] == "Next Monday"
+
+
+def test_video_signaling_websocket():
+    client = TestClient(app)
+    
+    with client.websocket_connect("/ws/video/99/client") as ws_client:
+        with client.websocket_connect("/ws/video/99/specialist") as ws_spec:
+            # Check client receives "peer-joined" event
+            msg = ws_client.receive_json()
+            assert msg["type"] == "peer-joined"
+            assert msg["role"] == "specialist"
+            
+            # Specialist sends offer
+            offer_data = {"type": "offer", "offer": {"sdp": "v=0...", "type": "offer"}}
+            ws_spec.send_json(offer_data)
+            
+            # Client receives offer
+            received = ws_client.receive_json()
+            assert received["type"] == "offer"
+            assert received["offer"]["sdp"] == "v=0..."
+            
+            # Client sends answer
+            answer_data = {"type": "answer", "answer": {"sdp": "v=0-ans...", "type": "answer"}}
+            ws_client.send_json(answer_data)
+            
+            # Specialist receives answer
+            received_ans = ws_spec.receive_json()
+            assert received_ans["type"] == "answer"
+            assert received_ans["answer"]["sdp"] == "v=0-ans..."
