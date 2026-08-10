@@ -118,8 +118,9 @@ app.add_middleware(
 SESSION_SECRET = os.getenv("SESSION_SECRET", os.urandom(24).hex())
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
 
-# Mount frontend static directory (CSS, JS, manifest)
-app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
+# Mount frontend static directory (CSS, JS, manifest) if it exists (local development fallback)
+if os.path.exists("frontend/static"):
+    app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
 # Jinja2 Templates Directory (development fallback)
 templates = Jinja2Templates(directory="templates")
@@ -567,8 +568,9 @@ async def chat_handler(request: Request, db: Session = Depends(get_db)):
 # 🚀 MAIN SERVER ENTRYPOINT
 # ==============================================================================
 
-# Mount the static frontend for all other client routes (fallback)
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+# Mount the static frontend for all other client routes (fallback for local development)
+if os.path.exists("frontend"):
+    app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 if __name__ == '__main__':
     import uvicorn
