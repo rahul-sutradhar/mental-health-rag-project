@@ -753,6 +753,26 @@ function stopIncomingCallListener() {
 // ==========================================
 let deferredPrompt = null;
 
+function shouldShowPwaControls() {
+    // 1. Check if running in installed standalone mode
+    if (window.matchMedia('(display-mode: standalone)').matches) return false;
+    // 2. Check if already clicked/dismissed install in this session
+    if (sessionStorage.getItem('pwaClickedInstall') === 'true') return false;
+
+    // 3. Allowed pages: home (root or index.html), login.html, and post-login redirects:
+    // choose-support.html, specialist-console.html, admin-dashboard.html
+    const path = window.location.pathname.split('/').pop().toLowerCase();
+    const allowedPages = [
+        "",
+        "index.html",
+        "login.html",
+        "choose-support.html",
+        "specialist-console.html",
+        "admin-dashboard.html"
+    ];
+    return allowedPages.includes(path);
+}
+
 // Catch browser's install prompt event
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -771,8 +791,9 @@ window.addEventListener('appinstalled', (evt) => {
 });
 
 function showInstallBanner() {
+    if (!shouldShowPwaControls()) return;
     // Prevent duplicates or showing inside standalone installed mode
-    if (document.getElementById('pwaInstallBanner') || window.matchMedia('(display-mode: standalone)').matches) return;
+    if (document.getElementById('pwaInstallBanner')) return;
     // Check if dismissed in last 24h
     const dismissedTime = localStorage.getItem('pwaDismissed');
     if (dismissedTime && (Date.now() - parseInt(dismissedTime)) < 24 * 60 * 60 * 1000) return;
@@ -807,7 +828,7 @@ function showInstallBanner() {
     }
 
     banner.innerHTML = `
-        <div style="font-size: 1.8rem; line-height: 1;">🧘</div>
+        <img src="/static/icon-192.png" style="width: 40px; height: 40px; object-fit: contain; flex-shrink: 0;" alt="App Icon">
         <div style="flex: 1;">
             <h4 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600; color: var(--text-primary, #333);">Install Serenity Mindspace</h4>
             <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary, #666); line-height: 1.3;">Get offline support, faster loads, and a dedicated homescreen shortcut!</p>
@@ -821,12 +842,16 @@ function showInstallBanner() {
     document.body.appendChild(banner);
 
     document.getElementById('pwaInstallBtn').addEventListener('click', async () => {
+        sessionStorage.setItem('pwaClickedInstall', 'true');
+        hideInstallBanner();
+        const navBtn = document.getElementById('navInstallBtn');
+        if (navBtn) navBtn.remove();
+
         if (deferredPrompt) {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             console.log(`[PWA] Install choice outcome: ${outcome}`);
             deferredPrompt = null;
-            hideInstallBanner();
         } else {
             showInstructionsModal();
         }
@@ -876,7 +901,7 @@ function showInstructionsModal() {
 
     modal.innerHTML = `
         <div style="background: white; border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.15); text-align: center;">
-            <div style="font-size: 2.5rem; margin-bottom: 12px;">🧘</div>
+            <img src="/static/icon-192.png" style="width: 64px; height: 64px; object-fit: contain; margin-bottom: 12px;" alt="App Icon">
             <h3 style="margin: 0 0 8px 0; font-size: 1.2rem; font-weight: 600; color: #333;">Install Serenity Mindspace</h3>
             <p style="margin: 0; font-size: 0.9rem; color: #666;">Follow these quick steps to add the app to your home screen:</p>
             ${instructions}
@@ -892,8 +917,14 @@ function showInstructionsModal() {
 }
 
 function updateNavInstallButton() {
+    if (!shouldShowPwaControls()) {
+        const navBtn = document.getElementById('navInstallBtn');
+        if (navBtn) navBtn.remove();
+        return;
+    }
+
     const navActions = document.querySelector('.nav-container .nav-actions');
-    if (navActions && !document.getElementById('navInstallBtn') && !window.matchMedia('(display-mode: standalone)').matches) {
+    if (navActions && !document.getElementById('navInstallBtn')) {
         const installBtn = document.createElement('button');
         installBtn.id = 'navInstallBtn';
         installBtn.className = 'btn btn-outline';
@@ -906,6 +937,10 @@ function updateNavInstallButton() {
         installBtn.innerHTML = '📥 <span>Install App</span>';
 
         installBtn.onclick = () => {
+            sessionStorage.setItem('pwaClickedInstall', 'true');
+            hideInstallBanner();
+            installBtn.remove();
+
             if (deferredPrompt) {
                 deferredPrompt.prompt();
             } else {
@@ -931,7 +966,22 @@ window.addEventListener('load', () => {
         document.head.appendChild(link);
     }
 
-    // 2. Register service-worker.js
+    // 2. Link/Override favicon dynamically to the document head
+    let fav = document.querySelector('link[rel="icon"]') || document.querySelector('link[rel="shortcut icon"]');
+    if (fav) {
+        fav.href = '/static/icon-192.png';
+        fav.type = 'image/png';
+        // Remove SVG specific attributes if changing to PNG
+        fav.removeAttribute('sizes');
+    } else {
+        fav = document.createElement('link');
+        fav.rel = 'icon';
+        fav.type = 'image/png';
+        fav.href = '/static/icon-192.png';
+        document.head.appendChild(fav);
+    }
+
+    // 3. Register service-worker.js
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker.js')
             .then((reg) => {
@@ -942,10 +992,9 @@ window.addEventListener('load', () => {
             });
     }
 
-    // 3. Inject Navbar Install Button
+    // 4. Inject Navbar Install Button (if on permitted page)
     updateNavInstallButton();
     
-    // 4. Show the install banner on load
+    // 5. Show the install banner on load (if on permitted page)
     showInstallBanner();
 });
-
