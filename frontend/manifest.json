@@ -2,19 +2,19 @@
   "name": "MindMate AI - Student Wellness Companion",
   "short_name": "MindMate",
   "description": "MindMate AI is a warm, empathetic mental wellness companion designed for Indian students.",
-  "start_url": "/login.html",
+  "start_url": "./login.html",
   "display": "standalone",
   "background_color": "#f4f6f0",
   "theme_color": "#6b8e23",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/static/icon-192.png",
+      "src": "./static/icon-192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/static/icon-512.png",
+      "src": "./static/icon-512.png",
       "type": "image/png",
       "sizes": "512x512"
     }

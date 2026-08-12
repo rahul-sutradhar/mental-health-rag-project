@@ -753,6 +753,18 @@ function stopIncomingCallListener() {
 // ==========================================
 let deferredPrompt = null;
 
+// Dynamically detect subdirectory path for hosts like GitHub Pages
+const getAppBasePath = () => {
+    if (window.location.hostname.includes('github.io')) {
+        const pathSegments = window.location.pathname.split('/');
+        if (pathSegments.length > 1 && pathSegments[1]) {
+            return '/' + pathSegments[1];
+        }
+    }
+    return '';
+};
+const BASE_PATH = getAppBasePath();
+
 function shouldShowPwaControls() {
     // 1. Check if running in installed standalone mode
     if (window.matchMedia('(display-mode: standalone)').matches) return false;
@@ -828,7 +840,7 @@ function showInstallBanner() {
     }
 
     banner.innerHTML = `
-        <img src="/static/icon-192.png" style="width: 40px; height: 40px; object-fit: contain; flex-shrink: 0;" alt="App Icon">
+        <img src="${BASE_PATH}/static/icon-192.png" style="width: 40px; height: 40px; object-fit: contain; flex-shrink: 0;" alt="App Icon">
         <div style="flex: 1;">
             <h4 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600; color: var(--text-primary, #333);">Install Serenity Mindspace</h4>
             <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary, #666); line-height: 1.3;">Get offline support, faster loads, and a dedicated homescreen shortcut!</p>
@@ -901,7 +913,7 @@ function showInstructionsModal() {
 
     modal.innerHTML = `
         <div style="background: white; border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.15); text-align: center;">
-            <img src="/static/icon-192.png" style="width: 64px; height: 64px; object-fit: contain; margin-bottom: 12px;" alt="App Icon">
+            <img src="${BASE_PATH}/static/icon-192.png" style="width: 64px; height: 64px; object-fit: contain; margin-bottom: 12px;" alt="App Icon">
             <h3 style="margin: 0 0 8px 0; font-size: 1.2rem; font-weight: 600; color: #333;">Install Serenity Mindspace</h3>
             <p style="margin: 0; font-size: 0.9rem; color: #666;">Follow these quick steps to add the app to your home screen:</p>
             ${instructions}
@@ -962,14 +974,14 @@ window.addEventListener('load', () => {
     if (!document.querySelector('link[rel="manifest"]')) {
         const link = document.createElement('link');
         link.rel = 'manifest';
-        link.href = '/manifest.json';
+        link.href = BASE_PATH + '/manifest.json';
         document.head.appendChild(link);
     }
 
     // 2. Link/Override favicon dynamically to the document head
     let fav = document.querySelector('link[rel="icon"]') || document.querySelector('link[rel="shortcut icon"]');
     if (fav) {
-        fav.href = '/static/icon-192.png';
+        fav.href = BASE_PATH + '/static/icon-192.png';
         fav.type = 'image/png';
         // Remove SVG specific attributes if changing to PNG
         fav.removeAttribute('sizes');
@@ -977,13 +989,13 @@ window.addEventListener('load', () => {
         fav = document.createElement('link');
         fav.rel = 'icon';
         fav.type = 'image/png';
-        fav.href = '/static/icon-192.png';
+        fav.href = BASE_PATH + '/static/icon-192.png';
         document.head.appendChild(fav);
     }
 
     // 3. Register service-worker.js
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register(BASE_PATH + '/service-worker.js')
             .then((reg) => {
                 console.log('[PWA] Service Worker registered successfully, scope:', reg.scope);
             })
