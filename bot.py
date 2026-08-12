@@ -282,48 +282,77 @@ def initialize_rag(root_dir: str = ".") -> VectorStore:
 # 🔍 RERANKING COMPONENT
 # ==============================================================================
 
-def rerank_documents(query: str, documents: List[str], k: int = 3, api_key: str = MISTRAL_API_KEY) -> List[str]:
+async def rerank_documents(query: str, documents: List[str], k: int = 3, api_key: str = MISTRAL_API_KEY) -> List[str]:
     """
-    Calls Mistral Reranker API to select the top k most relevant documents
-    from a list of retrieved candidate chunks.
+    Reranks document chunks using Mistral Chat Completions.
     """
     if not documents:
         return []
-        
     if not api_key:
-        print("[WARNING] MISTRAL_API_KEY not set. Skipping rerank step, utilizing top embeddings.")
+        print("[WARNING] MISTRAL_API_KEY not set. Utilizing top embeddings without reranking.")
         return documents[:k]
         
-    url = "https://api.mistral.ai/v1/rerank"
+    if len(documents) <= k:
+        return documents
+
+    url = "https://api.mistral.ai/v1/chat/completions"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}"
     }
+
+    # Format the documents with indices for the LLM
+    documents_input = "\n".join([f"[{i}] {doc}" for i, doc in enumerate(documents)])
+
+    system_prompt = """You are an information retrieval ranker.
+Your task is to rank the provided text documents based on their relevance to the user's query.
+You must output a JSON object containing a list of the top indices sorted in descending order of relevance.
+
+Constraints:
+1. ONLY return the indices of the most relevant documents (maximum k documents).
+2. The response must be a valid JSON object with the key "indices" containing a list of integers.
+3. Absolutely do not include any explanatory text, code fences, markdown, or commentary. Only output the JSON object.
+
+Example output:
+{
+    "indices": [2, 0, 4]
+}
+"""
+
+    user_content = f"Query: {query}\n\nDocuments to rank:\n{documents_input}\n\nReturn the top {k} indices in JSON format."
+
     payload = {
-        "model": MISTRAL_RERANK_MODEL,
-        "query": query,
-        "documents": [{"text": doc} for doc in documents]
+        "model": MISTRAL_LLM_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_content}
+        ],
+        "response_format": {"type": "json_object"}
     }
-    
+
     try:
-        with httpx.Client(timeout=30.0) as client:
-            response = client.post(url, json=payload, headers=headers)
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(url, json=payload, headers=headers)
             response.raise_for_status()
             res_data = response.json()
             
-            # Sort reranking results by relevance score descending
-            results = res_data["results"]
-            results.sort(key=lambda x: x["relevance_score"], reverse=True)
+            content_str = res_data["choices"][0]["message"]["content"]
+            result = json.loads(content_str)
+            indices = result.get("indices", [])
             
             top_docs = []
-            for item in results[:k]:
-                idx = item["index"]
-                top_docs.append(documents[idx])
+            for idx in indices:
+                if isinstance(idx, int) and 0 <= idx < len(documents):
+                    top_docs.append(documents[idx])
+            
+            if not top_docs:
+                return documents[:k]
                 
-            return top_docs
+            return top_docs[:k]
     except Exception as e:
-        print(f"[WARNING] Rerank API error: {e}. Falling back to top cosine similarity chunks.")
+        print(f"[WARNING] LLM Reranking failed: {e}. Falling back to top embeddings.")
         return documents[:k]
+
 
 
 # ==============================================================================

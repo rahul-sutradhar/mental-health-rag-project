@@ -623,9 +623,121 @@
         let activeThreadId = null;
         let threadsList = [];
 
-        window.addEventListener('DOMContentLoaded', () => {
+        // ==========================================
+        // 🗄️ INDEXEDDB CLIENT-SIDE CACHE
+        // ==========================================
+        const dbName = "MindMateChatCache";
+        const dbVersion = 1;
+        let localDB = null;
+
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, dbVersion);
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('threads')) {
+                        db.createObjectStore('threads', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('messages')) {
+                        const msgStore = db.createObjectStore('messages', { keyPath: 'id', autoIncrement: true });
+                        msgStore.createIndex('thread_id', 'thread_id', { unique: false });
+                    }
+                };
+                request.onsuccess = (event) => {
+                    localDB = event.target.result;
+                    resolve(localDB);
+                };
+                request.onerror = (event) => {
+                    console.error("IndexedDB initialization error:", event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        function saveLocalThreads(threads) {
+            if (!localDB) return;
+            const tx = localDB.transaction('threads', 'readwrite');
+            const store = tx.objectStore('threads');
+            store.clear();
+            threads.forEach(t => store.put(t));
+        }
+
+        function getLocalThreads() {
+            return new Promise((resolve) => {
+                if (!localDB) return resolve([]);
+                const tx = localDB.transaction('threads', 'readonly');
+                const store = tx.objectStore('threads');
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => resolve([]);
+            });
+        }
+
+        function saveLocalMessages(threadId, messages) {
+            if (!localDB) return;
+            const tx = localDB.transaction('messages', 'readwrite');
+            const store = tx.objectStore('messages');
+            
+            // Query for existing message records in this thread to delete them first
+            const index = store.index('thread_id');
+            const request = index.openCursor(IDBKeyRange.only(threadId));
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    store.delete(cursor.primaryKey);
+                    cursor.continue();
+                } else {
+                    // Cache the new messages list
+                    messages.forEach(m => {
+                        m.thread_id = threadId;
+                        store.put(m);
+                    });
+                }
+            };
+        }
+
+        function getLocalMessages(threadId) {
+            return new Promise((resolve) => {
+                if (!localDB) return resolve([]);
+                const tx = localDB.transaction('messages', 'readonly');
+                const store = tx.objectStore('messages');
+                const index = store.index('thread_id');
+                const request = index.getAll(IDBKeyRange.only(threadId));
+                request.onsuccess = () => {
+                    const msgs = request.result;
+                    msgs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                    resolve(msgs);
+                };
+                request.onerror = () => resolve([]);
+            });
+        }
+
+        async function fetchHistoryAndCache(threadId) {
+            try {
+                const response = await fetch(API_BASE + `/api/chat/history/${threadId}`, {
+                    headers: {
+                        'X-User-Id': localStorage.getItem('user_id')
+                    }
+                });
+                if (response.ok) {
+                    const history = await response.json();
+                    saveLocalMessages(threadId, history);
+                }
+            } catch (e) {
+                console.error("Failed to sync history to local cache:", e);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
             updateTokenDisplay();
             checkTokenWarning();
+
+            // Initialize cache database
+            try {
+                await initIndexedDB();
+            } catch (e) {
+                console.error("Local database init failed:", e);
+            }
             
             // Fetch threads list on load
             fetchThreads();
@@ -667,6 +779,17 @@
         }
 
         async function fetchThreads() {
+            // Load threads from local cache first for instant startup display
+            try {
+                const cachedThreads = await getLocalThreads();
+                if (cachedThreads && cachedThreads.length > 0) {
+                    threadsList = cachedThreads;
+                    renderThreadsSidebar();
+                }
+            } catch (e) {
+                console.error("Error reading cached threads:", e);
+            }
+
             try {
                 const response = await fetch(API_BASE + '/api/chat/threads', {
                     headers: {
@@ -678,17 +801,22 @@
                 threadsList = await response.json();
                 renderThreadsSidebar();
 
+                // Save fresh threads to cache
+                saveLocalThreads(threadsList);
+
                 // On load, always show a new blank screen (Draft) to the user as requested,
                 // but if activeThreadId is already set (e.g. after sending a message), keep selecting it.
                 if (activeThreadId && threadsList.some(t => t.id === activeThreadId)) {
                     selectThread(activeThreadId);
-                } else {
+                } else if (!activeThreadId) {
                     startNewDraftChat();
                 }
             } catch (err) {
                 console.error("Error fetching threads:", err);
-                if (typeof showToast === 'function') showToast("Could not load chat threads.", "error");
-                startNewDraftChat();
+                if (threadsList.length === 0) {
+                    if (typeof showToast === 'function') showToast("Could not load chat threads.", "error");
+                    startNewDraftChat();
+                }
             }
         }
 
@@ -735,9 +863,26 @@
             const welcomeArea = document.getElementById('chatWelcomeArea');
             const chatMessagesViewport = document.getElementById('chatMessages');
             
-            mList.innerHTML = '<div style="text-align:center; padding: var(--space-md); opacity:0.6;">Loading history...</div>';
             welcomeArea.style.display = 'none';
 
+            // 1. Try loading from client-side IndexedDB cache first for instant responsiveness
+            try {
+                const cachedMessages = await getLocalMessages(threadId);
+                if (cachedMessages && cachedMessages.length > 0) {
+                    mList.innerHTML = '';
+                    cachedMessages.forEach(m => {
+                        renderMessage(m.message, m.sender === 'user' ? 'user' : 'assistant', m.timestamp, m.emotion, m.risk, m.confidence);
+                    });
+                    chatMessagesViewport.scrollTop = chatMessagesViewport.scrollHeight;
+                } else {
+                    mList.innerHTML = '<div style="text-align:center; padding: var(--space-md); opacity:0.6;">Loading history...</div>';
+                }
+            } catch (e) {
+                console.error("Error reading cached messages:", e);
+                mList.innerHTML = '<div style="text-align:center; padding: var(--space-md); opacity:0.6;">Loading history...</div>';
+            }
+
+            // 2. Fetch fresh chat logs from backend database
             try {
                 const response = await fetch(API_BASE + `/api/chat/history/${threadId}`, {
                     headers: {
@@ -758,9 +903,15 @@
                     });
                 }
                 chatMessagesViewport.scrollTop = chatMessagesViewport.scrollHeight;
+
+                // 3. Cache the fresh server history to local IndexedDB
+                saveLocalMessages(threadId, history);
             } catch (err) {
                 console.error("Error loading thread history:", err);
-                mList.innerHTML = '<div style="text-align:center; color: var(--color-error); padding: var(--space-md);">Failed to load chat history.</div>';
+                const cachedMessages = await getLocalMessages(threadId);
+                if (!cachedMessages || cachedMessages.length === 0) {
+                    mList.innerHTML = '<div style="text-align:center; color: var(--color-error); padding: var(--space-md);">Failed to load chat history.</div>';
+                }
             }
         }
 
@@ -977,6 +1128,11 @@
                     } catch (e) {
                         console.error("Error parsing metadata payload:", e, metadataContent);
                     }
+                }
+
+                // Sync the local IndexedDB cache with the server database
+                if (activeThreadId) {
+                    await fetchHistoryAndCache(activeThreadId);
                 }
             } catch (err) {
                 hideTyping();

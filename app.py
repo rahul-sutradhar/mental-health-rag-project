@@ -786,7 +786,7 @@ async def chat_handler(request: Request, db: Session = Depends(get_db)):
     if vector_store and vector_store.documents:
         top_matches = vector_store.similarity_search(user_input, k=10)
         candidate_chunks = [match[0] for match in top_matches]
-        context_chunks = bot.rerank_documents(query=user_input, documents=candidate_chunks, k=3)
+        context_chunks = await bot.rerank_documents(query=user_input, documents=candidate_chunks, k=3)
         
     async def event_generator():
         # A. Stream response tokens in real-time
@@ -842,6 +842,9 @@ async def chat_handler(request: Request, db: Session = Depends(get_db)):
             "thread_title": new_title if total_messages == 0 else None
         }
         yield f"\n[METADATA] {json.dumps(metadata)}"
+
+    return StreamingResponse(event_generator(), media_type="text/plain")
+
 
     # ==============================================================================
 # 🩺 SPECIALIST & BOOKING API ENDPOINTS

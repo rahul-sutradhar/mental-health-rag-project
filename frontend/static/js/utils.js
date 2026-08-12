@@ -747,3 +747,28 @@ function stopIncomingCallListener() {
         callCheckInterval = null;
     }
 }
+
+// ==========================================
+// 📱 PWA SETUP: MANIFEST LINKING & SERVICE WORKER REGISTRATION
+// ==========================================
+window.addEventListener('load', () => {
+    // 1. Link manifest.json dynamically to the document head
+    if (!document.querySelector('link[rel="manifest"]')) {
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = '/manifest.json';
+        document.head.appendChild(link);
+    }
+
+    // 2. Register service-worker.js
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js')
+            .then((reg) => {
+                console.log('[PWA] Service Worker registered successfully, scope:', reg.scope);
+            })
+            .catch((err) => {
+                console.error('[PWA] Service Worker registration failed:', err);
+            });
+    }
+});
+
