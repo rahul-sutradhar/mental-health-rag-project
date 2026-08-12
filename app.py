@@ -442,6 +442,15 @@ if os.path.exists("templates"):
     @app.get("/404.html", name="not_found_page")
     async def not_found_page(request: Request):
         return render(request, "404.html")
+else:
+    @app.get("/")
+    async def root():
+        return {
+            "status": "healthy",
+            "message": "MindMate AI Backend API is running.",
+            "version": "1.0.0"
+        }
+
 
 
 # ==============================================================================
