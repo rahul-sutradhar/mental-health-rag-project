@@ -749,8 +749,179 @@ function stopIncomingCallListener() {
 }
 
 // ==========================================
-// 📱 PWA SETUP: MANIFEST LINKING & SERVICE WORKER REGISTRATION
+// 📱 PWA SETUP: MANIFEST LINKING & INSTALL CONTROLS
 // ==========================================
+let deferredPrompt = null;
+
+// Catch browser's install prompt event
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Show the floating install banner at the bottom
+    showInstallBanner();
+    // Refresh navbar install button
+    updateNavInstallButton();
+});
+
+window.addEventListener('appinstalled', (evt) => {
+    console.log('[PWA] App installed successfully');
+    hideInstallBanner();
+    const navBtn = document.getElementById('navInstallBtn');
+    if (navBtn) navBtn.remove();
+});
+
+function showInstallBanner() {
+    // Prevent duplicates or showing inside standalone installed mode
+    if (document.getElementById('pwaInstallBanner') || window.matchMedia('(display-mode: standalone)').matches) return;
+    // Check if dismissed in last 24h
+    const dismissedTime = localStorage.getItem('pwaDismissed');
+    if (dismissedTime && (Date.now() - parseInt(dismissedTime)) < 24 * 60 * 60 * 1000) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'pwaInstallBanner';
+    banner.style.cssText = `
+        position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+        background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(122, 155, 118, 0.3); border-radius: 16px; padding: 16px 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); display: flex; align-items: center; gap: 16px;
+        max-width: 400px; animation: pwaSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        font-family: inherit;
+    `;
+
+    if (!document.getElementById('pwaAnimations')) {
+        const style = document.createElement('style');
+        style.id = 'pwaAnimations';
+        style.textContent = `
+            @keyframes pwaSlideUp {
+                from { transform: translateY(100px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            @media (max-width: 640px) {
+                #pwaInstallBanner {
+                    left: 16px !important; right: 16px !important; bottom: 16px !important;
+                    max-width: none !important; flex-direction: column; text-align: center; gap: 12px !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    banner.innerHTML = `
+        <div style="font-size: 1.8rem; line-height: 1;">🧘</div>
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600; color: var(--text-primary, #333);">Install Serenity Mindspace</h4>
+            <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary, #666); line-height: 1.3;">Get offline support, faster loads, and a dedicated homescreen shortcut!</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button id="pwaCloseBtn" style="border: none; background: transparent; font-size: 0.85rem; cursor: pointer; color: var(--text-tertiary, #999); padding: 8px 12px; border-radius: 8px;">Not now</button>
+            <button id="pwaInstallBtn" style="border: none; background: var(--color-primary, #7A9B76); color: white; font-size: 0.85rem; font-weight: 500; cursor: pointer; padding: 8px 16px; border-radius: 8px; box-shadow: 0 4px 10px rgba(122, 155, 118, 0.2);">Install</button>
+        </div>
+    `;
+
+    document.body.appendChild(banner);
+
+    document.getElementById('pwaInstallBtn').addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`[PWA] Install choice outcome: ${outcome}`);
+            deferredPrompt = null;
+            hideInstallBanner();
+        } else {
+            showInstructionsModal();
+        }
+    });
+
+    document.getElementById('pwaCloseBtn').addEventListener('click', () => {
+        hideInstallBanner();
+        localStorage.setItem('pwaDismissed', Date.now().toString());
+    });
+}
+
+function hideInstallBanner() {
+    const banner = document.getElementById('pwaInstallBanner');
+    if (banner) banner.remove();
+}
+
+function showInstructionsModal() {
+    const modal = document.createElement('div');
+    modal.id = 'pwaInstructionsModal';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        z-index: 10000; background: rgba(0,0,0,0.4);
+        display: flex; align-items: center; justify-content: center;
+        backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    `;
+
+    const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    let instructions = "";
+    if (isiOS) {
+        instructions = `
+            <ol style="margin: 16px 0; padding-left: 20px; line-height: 1.6; text-align: left; font-size: 0.9rem;">
+                <li>Open <strong>Safari</strong> on your device.</li>
+                <li>Tap the <strong>Share</strong> button (square icon with an arrow pointing up).</li>
+                <li>Scroll down and select <strong>'Add to Home Screen'</strong>.</li>
+                <li>Tap <strong>'Add'</strong> in the top-right corner.</li>
+            </ol>
+        `;
+    } else {
+        instructions = `
+            <ol style="margin: 16px 0; padding-left: 20px; line-height: 1.6; text-align: left; font-size: 0.9rem;">
+                <li>Click your browser's menu button (three vertical dots or lines).</li>
+                <li>Select <strong>'Install App'</strong> or <strong>'Add to Home screen'</strong>.</li>
+                <li>Confirm the installation prompt.</li>
+            </ol>
+        `;
+    }
+
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.15); text-align: center;">
+            <div style="font-size: 2.5rem; margin-bottom: 12px;">🧘</div>
+            <h3 style="margin: 0 0 8px 0; font-size: 1.2rem; font-weight: 600; color: #333;">Install Serenity Mindspace</h3>
+            <p style="margin: 0; font-size: 0.9rem; color: #666;">Follow these quick steps to add the app to your home screen:</p>
+            ${instructions}
+            <button id="closeInstructionsBtn" style="border: none; background: var(--color-primary, #7A9B76); color: white; width: 100%; padding: 12px; border-radius: 8px; font-weight: 500; cursor: pointer; margin-top: 8px;">Got it</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    document.getElementById('closeInstructionsBtn').addEventListener('click', () => {
+        modal.remove();
+        hideInstallBanner();
+    });
+}
+
+function updateNavInstallButton() {
+    const navActions = document.querySelector('.nav-container .nav-actions');
+    if (navActions && !document.getElementById('navInstallBtn') && !window.matchMedia('(display-mode: standalone)').matches) {
+        const installBtn = document.createElement('button');
+        installBtn.id = 'navInstallBtn';
+        installBtn.className = 'btn btn-outline';
+        installBtn.style.padding = '8px 16px';
+        installBtn.style.fontSize = '0.85rem';
+        installBtn.style.marginRight = '8px';
+        installBtn.style.alignItems = 'center';
+        installBtn.style.gap = '6px';
+        installBtn.style.display = 'inline-flex';
+        installBtn.innerHTML = '📥 <span>Install App</span>';
+
+        installBtn.onclick = () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+            } else {
+                showInstructionsModal();
+            }
+        };
+
+        const loginBtn = document.getElementById('navLoginBtn');
+        if (loginBtn) {
+            navActions.insertBefore(installBtn, loginBtn);
+        } else {
+            navActions.appendChild(installBtn);
+        }
+    }
+}
+
 window.addEventListener('load', () => {
     // 1. Link manifest.json dynamically to the document head
     if (!document.querySelector('link[rel="manifest"]')) {
@@ -770,5 +941,11 @@ window.addEventListener('load', () => {
                 console.error('[PWA] Service Worker registration failed:', err);
             });
     }
+
+    // 3. Inject Navbar Install Button
+    updateNavInstallButton();
+    
+    // 4. Show the install banner on load
+    showInstallBanner();
 });
 
