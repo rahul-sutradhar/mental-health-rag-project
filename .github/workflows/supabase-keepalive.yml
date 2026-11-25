@@ -18,6 +18,7 @@ jobs:
           --retry 3 --retry-delay 10 \
           -X POST "$SUPABASE_URL/rest/v1/rpc/ping" \
           -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
           -H "Content-Type: application/json" \
           -d '{}' \
           -o /dev/null
